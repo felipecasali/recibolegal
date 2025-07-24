@@ -41,8 +41,20 @@ mkdir -p /opt/recibolegal
 cd /opt/recibolegal
 
 log_info "Step 4: Cloning repository..."
-# Clone the ReciboLegal repository
-git clone https://github.com/felipecasali/recibolegal.git .
+# Check if repository is already cloned
+if [ -d ".git" ]; then
+    log_info "Repository already exists, updating..."
+    git fetch origin
+    git reset --hard origin/main
+    git clean -fd
+else
+    log_info "Cloning fresh repository..."
+    # Remove any existing files first
+    rm -rf /opt/recibolegal/*
+    rm -rf /opt/recibolegal/.[^.]*
+    # Clone the ReciboLegal repository
+    git clone https://github.com/felipecasali/recibolegal.git .
+fi
 
 log_info "Step 5: Setting up environment..."
 if [ ! -f ".env.production" ]; then
