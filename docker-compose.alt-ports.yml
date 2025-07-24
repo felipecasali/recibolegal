@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  recibolegal:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    env_file:
+      - .env.production
+    restart: unless-stopped
+    volumes:
+      - receipts_data:/app/receipts
+    networks:
+      - recibolegal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.recibolegal.rule=Host(`recibolegal.com.br`) || Host(`www.recibolegal.com.br`)"
+      - "traefik.http.routers.recibolegal.tls=true"
+      - "traefik.http.routers.recibolegal.tls.certresolver=letsencrypt"
+      - "traefik.http.services.recibolegal.loadbalancer.server.port=3001"
+
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@recibolegal.com.br"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--global.checkNewVersion=false"
+      - "--global.sendAnonymousUsage=false"
+    ports:
+      - "8080:80"    # HTTP on port 8080 instead of 80
+      - "8443:443"   # HTTPS on port 8443 instead of 443
+      - "8081:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    restart: unless-stopped
+    networks:
+      - recibolegal_network
+
+volumes:
+  receipts_data:
+    driver: local
+  traefik_letsencrypt:
+    driver: local
+
+networks:
+  recibolegal_network:
+    driver: bridge
