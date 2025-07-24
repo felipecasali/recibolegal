@@ -1,0 +1,69 @@
+// Load environment variables FIRST
+const dotenv = require('dotenv');
+dotenv.config();
+
+const express = require('express');
+const cors = require('cors');
+const whatsappRoutes = require('./routes/whatsapp');
+const receiptRoutes = require('./routes/receipts');
+const subscriptionRoutes = require('./routes/subscription');
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors());
+
+// Debug logging
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path}`);
+  next();
+});
+
+// For other routes, use JSON parsing (except webhook)
+app.use((req, res, next) => {
+  if (req.path === '/api/subscription/webhook') {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
+
+app.use(express.urlencoded({ extended: true }));
+
+// For Stripe webhooks, we need raw body
+app.use('/api/subscription/webhook', express.raw({ type: 'application/json' }));
+
+// Routes
+console.log('🔧 Registering routes...');
+app.use('/api/whatsapp', whatsappRoutes);
+app.use('/api/receipts', receiptRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+console.log('✅ Routes registered successfully');
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', message: 'ReciboLegal API is running' });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    error: 'Something went wrong!',
+    message: err.message 
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 ReciboLegal API server running on port ${PORT}`);
+  console.log(`📱 WhatsApp webhook: http://localhost:${PORT}/api/whatsapp/webhook`);
+  console.log(`📄 Receipt API: http://localhost:${PORT}/api/receipts`);
+});
+
+module.exports = app;
