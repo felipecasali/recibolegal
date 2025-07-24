@@ -31,7 +31,7 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.email=admin@recibolegal.com.br"
+      - "--certificatesresolvers.letsencrypt.acme.email=felipecasali@gmail.com"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
       - "--global.checkNewVersion=false"
       - "--global.sendAnonymousUsage=false"
