@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  recibolegal:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    env_file:
+      - .env.production
+    restart: unless-stopped
+    volumes:
+      - receipts_data:/app/receipts
+    networks:
+      - recibolegal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.recibolegal.rule=Host(`recibolegal.com.br`) || Host(`www.recibolegal.com.br`)"
+      - "traefik.http.services.recibolegal.loadbalancer.server.port=3001"
+      # SSL DISABLED temporarily to avoid rate limits
+
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--global.checkNewVersion=false"
+      - "--global.sendAnonymousUsage=false"
+      # SSL/HTTPS disabled temporarily
+    ports:
+      - "80:80"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    networks:
+      - recibolegal_network
+
+volumes:
+  receipts_data:
+    driver: local
+
+networks:
+  recibolegal_network:
+    driver: bridge
