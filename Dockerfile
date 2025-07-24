@@ -2,9 +2,9 @@
 FROM node:20-alpine AS frontend-build
 
 # Build frontend
-WORKDIR /app/frontend
+WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 COPY . .
 RUN npm run build
 
@@ -14,7 +14,7 @@ FROM node:20-alpine AS production
 # Install production dependencies
 WORKDIR /app
 COPY server/package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 # Copy server code
 COPY server/ ./
