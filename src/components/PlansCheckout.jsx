@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './PlansCheckout.css'
 
 function PlansCheckout({ onBack, initialPlan = 'professional' }) {
@@ -11,6 +11,11 @@ function PlansCheckout({ onBack, initialPlan = 'professional' }) {
     company: ''
   })
   const [showCheckout, setShowCheckout] = useState(false)
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   const plans = {
     free: {
@@ -210,7 +215,7 @@ function PlansCheckout({ onBack, initialPlan = 'professional' }) {
           <p>
             {selectedPlan === 'free' 
               ? 'Complete seus dados para ativar sua conta gratuita' 
-              : 'Comece grátis e evolua conforme sua necessidade'
+              : 'Comece grátis ou escolha o plano ideal para você'
             }
           </p>
           
@@ -267,7 +272,7 @@ function PlansCheckout({ onBack, initialPlan = 'professional' }) {
               
               <ul className="features-list">
                 {plan.features.map((feature, index) => (
-                  <li key={index}>✓ {feature}</li>
+                  <li key={index}>{feature}</li>
                 ))}
               </ul>
               

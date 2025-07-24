@@ -3,13 +3,13 @@
 .plans-checkout {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  padding: 2rem 0;
+  padding: 1rem 0 2rem 0; /* Reduzido padding top */
 }
 
 .checkout-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 1rem; /* Reduzido padding lateral */
 }
 
 .back-btn {
@@ -21,7 +21,10 @@
   font-weight: 600;
   color: #475569;
   transition: all 0.3s ease;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem; /* Reduzido margin bottom */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .back-btn:hover {
@@ -33,37 +36,43 @@
 /* Header */
 .checkout-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem; /* Reduzido de 3rem para 2rem */
 }
 
 .checkout-header h1 {
-  font-size: 3rem;
+  font-size: 2.5rem; /* Reduzido de 3rem */
   font-weight: 700;
   color: #1e293b;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem; /* Reduzido */
+  line-height: 1.2;
 }
 
 .checkout-header p {
-  font-size: 1.25rem;
+  font-size: 1.1rem; /* Reduzido de 1.25rem */
   color: #64748b;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem; /* Reduzido */
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .billing-toggle {
   display: inline-flex;
   background: white;
   border-radius: 12px;
-  padding: 0.5rem;
+  padding: 0.4rem; /* Reduzido */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
 }
 
 .billing-toggle label {
-  padding: 0.75rem 2rem;
+  padding: 0.6rem 1.5rem; /* Reduzido */
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
   color: #64748b;
+  font-size: 0.95rem;
 }
 
 .billing-toggle label.active {
@@ -79,41 +88,44 @@
 .discount {
   background: #22c55e;
   color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  margin-left: 0.5rem;
+  padding: 0.2rem 0.4rem; /* Reduzido */
+  border-radius: 4px;
+  font-size: 0.7rem; /* Reduzido */
+  margin-left: 0.4rem;
+  font-weight: 700;
 }
 
 /* Plans Grid */
 .plans-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Reduzido min-width */
+  gap: 1.5rem; /* Reduzido */
+  margin-bottom: 2.5rem; /* Reduzido */
 }
 
 .plan-card {
   background: white;
   border: 3px solid #e2e8f0;
-  border-radius: 20px;
-  padding: 2rem;
+  border-radius: 16px; /* Reduzido de 20px */
+  padding: 1.5rem; /* Reduzido de 2rem */
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  height: fit-content;
 }
 
 .plan-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px); /* Reduzido */
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1); /* Reduzido */
 }
 
 .plan-card.selected {
   border-color: #667eea;
   background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
-  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 15px 30px rgba(102, 126, 234, 0.15); /* Reduzido */
+  transform: translateY(-3px);
 }
 
 .plan-card.popular {
@@ -127,31 +139,34 @@
   transform: translateX(-50%);
   background: #22c55e;
   color: white;
-  padding: 0.5rem 2rem;
+  padding: 0.4rem 1.5rem; /* Reduzido */
   border-radius: 0 0 12px 12px;
-  font-size: 0.875rem;
+  font-size: 0.8rem; /* Reduzido */
   font-weight: 600;
+  z-index: 1;
 }
 
 .plan-card h3 {
-  font-size: 1.75rem;
+  font-size: 1.5rem; /* Reduzido de 1.75rem */
   font-weight: 700;
   color: #1e293b;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem; /* Reduzido */
+  margin-top: 0.5rem; /* Para popular label */
 }
 
 .plan-price {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem; /* Reduzido */
 }
 
 .plan-price .price {
-  font-size: 3rem;
+  font-size: 2.5rem; /* Reduzido de 3rem */
   font-weight: 700;
   color: #667eea;
+  line-height: 1;
 }
 
 .plan-price .cycle {
-  font-size: 1rem;
+  font-size: 0.9rem; /* Reduzido */
   color: #64748b;
   margin-left: 0.5rem;
 }
@@ -159,31 +174,44 @@
 .yearly-savings {
   background: #dcfce7;
   color: #166534;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem; /* Reduzido */
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 0.8rem; /* Reduzido */
   font-weight: 600;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem; /* Reduzido */
 }
 
 .features-list {
   list-style: none;
   text-align: left;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem; /* Reduzido */
+  padding: 0;
 }
 
 .features-list li {
-  padding: 0.5rem 0;
+  padding: 0.4rem 0; /* Reduzido */
   color: #475569;
+  font-size: 0.9rem; /* Reduzido */
+  display: flex;
+  align-items: center;
+}
+
+.features-list li::before {
+  content: '✓';
+  color: #22c55e;
+  font-weight: bold;
+  margin-right: 0.5rem;
   font-size: 1rem;
 }
 
 .plan-select-indicator {
   font-weight: 600;
   color: #667eea;
-  padding: 1rem;
+  padding: 0.75rem; /* Reduzido */
   border-radius: 12px;
   background: rgba(102, 126, 234, 0.1);
+  font-size: 0.9rem;
+  margin-top: auto;
 }
 
 .plan-card.selected .plan-select-indicator {
@@ -194,23 +222,24 @@
 /* User Form */
 .user-form {
   background: white;
-  border-radius: 20px;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  border-radius: 16px; /* Reduzido */
+  padding: 1.5rem; /* Reduzido */
+  margin-bottom: 1.5rem; /* Reduzido */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .user-form h3 {
-  font-size: 1.5rem;
+  font-size: 1.3rem; /* Reduzido */
   font-weight: 700;
   color: #1e293b;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem; /* Reduzido */
+  text-align: center;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Reduzido min-width */
+  gap: 1.25rem; /* Reduzido */
 }
 
 .form-group {
@@ -221,14 +250,15 @@
 .form-group label {
   font-weight: 600;
   color: #374151;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem; /* Reduzido */
+  font-size: 0.9rem;
 }
 
 .form-group input {
-  padding: 1rem;
+  padding: 0.875rem; /* Reduzido */
   border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 1rem;
+  border-radius: 10px; /* Reduzido */
+  font-size: 0.95rem; /* Reduzido */
   transition: all 0.3s ease;
 }
 
@@ -236,6 +266,11 @@
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input::placeholder {
+  color: #9ca3af;
+  font-size: 0.9rem;
 }
 
 /* Checkout Actions */
@@ -246,32 +281,48 @@
 .continue-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 1.25rem 3rem;
+  padding: 1rem 2.5rem; /* Reduzido */
   border: none;
-  border-radius: 16px;
-  font-size: 1.25rem;
+  border-radius: 14px; /* Reduzido */
+  font-size: 1.1rem; /* Reduzido */
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-  margin-bottom: 2rem;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3); /* Reduzido */
+  margin-bottom: 1.5rem; /* Reduzido */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .continue-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px); /* Reduzido */
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4); /* Reduzido */
+}
+
+.continue-btn[data-free="true"] {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.continue-btn[data-free="true"]:hover {
+  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4);
 }
 
 .trust-indicators {
   display: flex;
   justify-content: center;
-  gap: 2rem;
+  gap: 1.5rem; /* Reduzido */
   flex-wrap: wrap;
+  margin-top: 1rem;
 }
 
 .trust-item {
   color: #64748b;
   font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 /* Checkout Summary Page */
@@ -485,34 +536,105 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .plans-checkout {
+    padding: 0.5rem 0 2rem 0; /* Reduzido ainda mais no mobile */
+  }
+  
   .checkout-container {
     padding: 0 1rem;
   }
   
+  .checkout-header {
+    margin-bottom: 1.5rem; /* Reduzido */
+  }
+  
   .checkout-header h1 {
-    font-size: 2rem;
+    font-size: 1.8rem; /* Reduzido */
+    line-height: 1.3;
+  }
+  
+  .checkout-header p {
+    font-size: 1rem;
+    margin-bottom: 1rem;
   }
   
   .billing-toggle {
-    flex-direction: column;
     width: 100%;
+    justify-content: center;
+  }
+  
+  .billing-toggle label {
+    flex: 1;
+    text-align: center;
+    padding: 0.6rem 1rem;
   }
   
   .plans-grid {
     grid-template-columns: 1fr;
+    gap: 1rem; /* Reduzido */
+    margin-bottom: 2rem;
   }
   
-  .checkout-content {
-    grid-template-columns: 1fr;
-    gap: 2rem;
+  .plan-card {
+    padding: 1.25rem; /* Reduzido */
+  }
+  
+  .plan-card h3 {
+    font-size: 1.3rem;
+  }
+  
+  .plan-price .price {
+    font-size: 2rem; /* Reduzido para mobile */
+  }
+  
+  .user-form {
+    padding: 1.25rem; /* Reduzido */
   }
   
   .form-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .continue-btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+  }
+  
+  .checkout-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem; /* Reduzido */
   }
   
   .trust-indicators {
     flex-direction: column;
-    gap: 1rem;
+    align-items: center;
+    gap: 0.75rem; /* Reduzido */
+  }
+  
+  .back-btn {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkout-header h1 {
+    font-size: 1.6rem;
+  }
+  
+  .plan-price .price {
+    font-size: 1.8rem;
+  }
+  
+  .features-list li {
+    font-size: 0.85rem;
+  }
+  
+  .billing-toggle label {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
   }
 }
