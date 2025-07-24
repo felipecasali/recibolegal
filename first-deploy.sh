@@ -41,8 +41,8 @@ mkdir -p /opt/recibolegal
 cd /opt/recibolegal
 
 log_info "Step 4: Cloning repository..."
-# You need to replace with your actual GitHub repository
-git clone https://github.com/YOUR_USERNAME/recibolegal.git .
+# Clone the ReciboLegal repository
+git clone https://github.com/felipecasali/recibolegal.git .
 
 log_info "Step 5: Setting up environment..."
 if [ ! -f ".env.production" ]; then
