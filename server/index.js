@@ -50,14 +50,27 @@ app.get('/api/health', (req, res) => {
 // Serve static files from the React build
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve React app for all non-API routes
-app.get('*', (req, res) => {
+// Handle React router - serve index.html for all non-API routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/plans', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/checkout', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Catch-all for other frontend routes (excluding API)
+app.use((req, res, next) => {
   // Skip API routes
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   
-  // Serve React app
+  // Serve React app for any other route
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
