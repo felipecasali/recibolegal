@@ -4,6 +4,7 @@ dotenv.config();
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const whatsappRoutes = require('./routes/whatsapp');
 const receiptRoutes = require('./routes/receipts');
 const subscriptionRoutes = require('./routes/subscription');
@@ -46,6 +47,20 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'ReciboLegal API is running' });
 });
 
+// Serve static files from the React build
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve React app for all non-API routes
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  // Serve React app
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -53,11 +68,6 @@ app.use((err, req, res, next) => {
     error: 'Something went wrong!',
     message: err.message 
   });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Endpoint not found' });
 });
 
 app.listen(PORT, () => {
