@@ -128,7 +128,9 @@ else
     echo "   1. Check logs: docker-compose -f /opt/recibolegal/docker-compose.prod.yml logs -f"
     echo "   2. Restart containers: docker-compose -f /opt/recibolegal/docker-compose.prod.yml restart"
     echo "   3. Check environment: cat /opt/recibolegal/.env.production"
-    echo "   4. Rebuild containers: docker-compose -f /opt/recibolegal/docker-compose.prod.yml build --no-cache"
+    echo "   4. Update code: cd /opt/recibolegal && git pull"
+    echo "   5. Rebuild containers: docker-compose -f /opt/recibolegal/docker-compose.prod.yml build --no-cache"
+    echo "   6. Check build logs: docker-compose -f /opt/recibolegal/docker-compose.prod.yml build"
 fi
 
 echo ""
