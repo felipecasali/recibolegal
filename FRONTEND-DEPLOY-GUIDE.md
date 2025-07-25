@@ -86,6 +86,24 @@ cd /opt/recibolegal
 
 ## 🚨 Troubleshooting
 
+### **Erro: Node.js Compatibility (SyntaxError: Unexpected token '.')**
+
+Se você encontrar o erro do Firebase com optional chaining (`?.`), significa que o servidor está usando uma versão antiga do Node.js.
+
+**Solução Rápida:**
+```bash
+cd /opt/recibolegal
+git pull origin main
+./quick-node-fix.sh
+```
+
+**Solução Completa:**
+```bash
+cd /opt/recibolegal
+git pull origin main
+./fix-node-deploy.sh
+```
+
 ### **Se algo der errado:**
 
 1. **Restaurar Backup**:
