@@ -344,15 +344,23 @@ Digite *OI* quando fizer o upgrade para criar novos recibos.`;
 // Function to send WhatsApp message
 async function sendWhatsAppMessage(to, message) {
   try {
-    // Remove extra spaces and fix format
+    // Remove extra spaces
     let formattedTo = to;
     formattedTo = formattedTo.replace(/\s+/g, '');
     
-    if (!formattedTo.startsWith('whatsapp:+')) {
-      if (formattedTo.startsWith('whatsapp:')) {
-        formattedTo = formattedTo.replace('whatsapp:', 'whatsapp:+');
-      } else if (!formattedTo.startsWith('whatsapp:')) {
+    // Normalize to whatsapp:+XXXXXXXXX format
+    if (!formattedTo.startsWith('whatsapp:')) {
+      // If it's just a phone number, add whatsapp: prefix
+      if (formattedTo.startsWith('+')) {
+        formattedTo = `whatsapp:${formattedTo}`;
+      } else {
         formattedTo = `whatsapp:+${formattedTo}`;
+      }
+    } else {
+      // Already has whatsapp: prefix, check if it has +
+      const phoneNumber = formattedTo.replace('whatsapp:', '');
+      if (!phoneNumber.startsWith('+')) {
+        formattedTo = `whatsapp:+${phoneNumber}`;
       }
     }
     
