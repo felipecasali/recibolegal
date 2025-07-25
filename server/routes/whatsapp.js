@@ -114,17 +114,26 @@ router.post('/webhook', async (req, res) => {
           try {
             const cleanPhone = userPhone.replace('whatsapp:', '').replace('+', '');
             const stats = await userService.getUserStats(cleanPhone);
-            responseMessage = `📊 *Status da sua conta:*
+            
+            if (!stats) {
+              responseMessage = `📊 *Status da conta:* Plano Gratuito (5 recibos/mês)
+
+❌ Não foi possível carregar informações detalhadas.
+
+Digite *OI* para criar um recibo.`;
+            } else {
+              responseMessage = `📊 *Status da sua conta:*
 
 📋 *Plano atual:* ${stats.planName}
-📄 *Recibos este mês:* ${stats.receiptsThisMonth}/${stats.monthlyLimit === -1 ? '∞' : stats.monthlyLimit}
+📄 *Recibos este mês:* ${stats.currentMonthUsage}/${stats.monthlyLimit === -1 ? '∞' : stats.monthlyLimit}
 💳 *Status:* ${stats.subscriptionStatus || 'Ativo'}
 
-${stats.receiptsThisMonth >= stats.monthlyLimit && stats.monthlyLimit !== -1 ? 
-  `⚠️ *Limite atingido!* Faça upgrade: ${process.env.PUBLIC_URL || 'https://recibolegal2025.loca.lt'}/plans` : 
+${stats.currentMonthUsage >= stats.monthlyLimit && stats.monthlyLimit !== -1 ? 
+  `⚠️ *Limite atingido!* Faça upgrade: ${process.env.PUBLIC_URL || 'https://recibolegal.com.br'}/plans` : 
   '✅ Você pode gerar mais recibos!'}
 
 Digite *OI* para criar um recibo.`;
+            }
           } catch (error) {
             responseMessage = `📊 *Status da conta:* Plano Gratuito (5 recibos/mês)
 
