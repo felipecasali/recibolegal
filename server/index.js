@@ -8,6 +8,7 @@ const path = require('path');
 const whatsappRoutes = require('./routes/whatsapp');
 const receiptRoutes = require('./routes/receipts');
 const subscriptionRoutes = require('./routes/subscription');
+const analyticsRoutes = require('./routes/analytics');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -40,6 +41,7 @@ console.log('🔧 Registering routes...');
 app.use('/api/whatsapp', whatsappRoutes);
 app.use('/api/receipts', receiptRoutes);
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/analytics', analyticsRoutes);
 console.log('✅ Routes registered successfully');
 
 // Health check endpoint
@@ -61,6 +63,18 @@ app.get('/plans', (req, res) => {
 
 app.get('/checkout', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+app.get('/reports', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html')); // Por enquanto usar o mesmo
+});
+
+app.get('/receipts', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html')); // Por enquanto usar o mesmo
 });
 
 // Catch-all for other frontend routes (excluding API)

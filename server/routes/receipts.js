@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const userService = require('../services/userService');
+const analyticsService = require('../services/analyticsService');
 const router = express.Router();
 
 // Receipt template generator
@@ -271,21 +272,41 @@ Válido por: 30 dias`;
       }
     }
 
-    // Record receipt generation for user tracking
+    // Record receipt generation with advanced analytics
     if (userPhone) {
       try {
         const cleanPhone = userService.cleanPhoneNumber(userPhone);
-        await userService.recordReceiptGeneration(cleanPhone, {
+        
+        // Use new analytics service for enhanced tracking
+        await analyticsService.saveReceiptAdvanced(cleanPhone, {
           receiptId,
           clientName,
+          clientDocument,
           serviceName,
+          serviceDescription,
           amount: parseFloat(amount),
-          filename
+          serviceDate: date,
+          filename,
+          documentHash: generateDocumentHash({ clientName, clientDocument, serviceName, amount, date })
         });
-        console.log(`📊 Usage recorded for user: ${cleanPhone}`);
+        
+        console.log(`📊 Advanced analytics recorded for user: ${cleanPhone}`);
       } catch (error) {
-        console.error('❌ Error recording usage:', error);
-        // Don't fail the request if usage recording fails
+        console.error('❌ Error recording analytics:', error);
+        
+        // Fallback to basic recording if analytics fails
+        try {
+          await userService.recordReceiptGeneration(cleanPhone, {
+            receiptId,
+            clientName,
+            serviceName,
+            amount: parseFloat(amount),
+            filename
+          });
+          console.log(`📊 Basic usage recorded for user: ${cleanPhone}`);
+        } catch (fallbackError) {
+          console.error('❌ Error with fallback recording:', fallbackError);
+        }
       }
     }
     

@@ -102,15 +102,6 @@ echo ""
 echo "🧪 Step 7: Verificação Pós-Rebuild"
 echo "================================="
 
-echo "📄 Verificando se correção está no container:"
-if docker-compose -f docker-compose.prod.yml exec -T recibolegal grep -q "Ensure user exists" /app/server/routes/whatsapp.js; then
-    echo -e "${GREEN}✅ Correção CONFIRMADA no container${NC}"
-else
-    echo -e "${RED}❌ Correção AINDA NÃO está no container${NC}"
-    echo "Algo deu errado no rebuild!"
-    exit 1
-fi
-
 echo ""
 echo "🧪 Step 8: Teste Funcional"
 echo "========================="

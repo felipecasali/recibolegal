@@ -1,6 +1,7 @@
 const express = require('express');
 const twilio = require('twilio');
 const userService = require('../services/userService');
+const analyticsService = require('../services/analyticsService');
 const router = express.Router();
 
 // Initialize Twilio client function
@@ -166,11 +167,98 @@ Digite *OI* para criar um recibo ou *UPGRADE* para ver planos.`;
 ${process.env.PUBLIC_URL || 'https://recibolegal2025.loca.lt'}/plans
 
 Digite *OI* para criar um recibo.`;
+        } else if (message.includes('dashboard') || message.includes('painel') || message.includes('resumo')) {
+          // Dashboard do usuário
+          try {
+            const dashboard = await analyticsService.getUserDashboard(normalizedPhone);
+            
+            responseMessage = `📊 *Seu Dashboard ReciboLegal:*
+
+📈 *Resumo Geral:*
+• Total de recibos: ${dashboard.summary.totalReceipts}
+• Valor total: R$ ${dashboard.summary.totalAmount.toFixed(2)}
+• Ticket médio: R$ ${dashboard.summary.avgReceiptValue.toFixed(2)}
+
+📅 *Este mês:*
+• Recibos: ${dashboard.summary.thisMonthReceipts}
+• Faturado: R$ ${dashboard.summary.thisMonthAmount.toFixed(2)}
+
+${dashboard.charts.topServices.length > 0 ? `🏆 *Top serviços:*
+${dashboard.charts.topServices.slice(0, 3).map((s, i) => 
+  `${i+1}. ${s.name} (${s.count} recibos)`
+).join('\n')}` : ''}
+
+🔗 *Dashboard completo:*
+${process.env.PUBLIC_URL || 'https://recibolegal.com.br'}/dashboard
+
+Digite *HISTÓRICO* para ver seus recibos ou *OI* para criar novo.`;
+          } catch (error) {
+            responseMessage = `📊 *Dashboard indisponível no momento.*
+
+Digite *OI* para criar um recibo.`;
+          }
+        } else if (message.includes('histórico') || message.includes('historico') || message.includes('recibos') || message.includes('lista')) {
+          // Histórico de recibos
+          try {
+            const receipts = await userService.getUserReceipts(normalizedPhone, 5);
+            
+            if (receipts.length === 0) {
+              responseMessage = `📄 *Você ainda não possui recibos.*
+
+Digite *OI* para criar seu primeiro recibo!`;
+            } else {
+              responseMessage = `📄 *Seus últimos recibos:*
+
+${receipts.map(receipt => 
+  `• ${receipt.receiptNumber || 'N/A'} - ${receipt.clientName} - R$ ${(receipt.amount || 0).toFixed(2)}`
+).join('\n')}
+
+📊 *Total: ${receipts.length} recibos listados*
+
+🔗 *Ver histórico completo:*
+${process.env.PUBLIC_URL || 'https://recibolegal.com.br'}/receipts
+
+Digite *DASHBOARD* para ver estatísticas ou *OI* para criar novo recibo.`;
+            }
+          } catch (error) {
+            responseMessage = `📄 *Histórico indisponível no momento.*
+
+Digite *OI* para criar um recibo.`;
+          }
+        } else if (message.includes('relatório') || message.includes('relatorio') || message.includes('financeiro')) {
+          // Relatório financeiro
+          try {
+            const report = await analyticsService.getFinancialReport(normalizedPhone);
+            
+            responseMessage = `📋 *Relatório Financeiro:*
+
+📊 *Resumo:*
+• Total de recibos: ${report.summary.totalReceipts}
+• Valor total: R$ ${report.summary.totalAmount.toFixed(2)}
+• Ticket médio: R$ ${report.summary.avgReceiptValue.toFixed(2)}
+
+${report.breakdown.byService.length > 0 ? `🔧 *Por serviço:*
+${report.breakdown.byService.slice(0, 3).map(service => 
+  `• ${service.name}: ${service.count} recibos (R$ ${service.amount.toFixed(2)})`
+).join('\n')}` : ''}
+
+🔗 *Relatório completo e exportação:*
+${process.env.PUBLIC_URL || 'https://recibolegal.com.br'}/reports
+
+Digite *DASHBOARD* para ver mais estatísticas.`;
+          } catch (error) {
+            responseMessage = `📋 *Relatório indisponível no momento.*
+
+Digite *OI* para criar um recibo.`;
+          }
         } else {
           responseMessage = `Olá! Digite *OI* para começar a criar seu recibo! 😊
 
 💡 *Outros comandos:*
 • *STATUS* - Ver informações da conta
+• *DASHBOARD* - Ver estatísticas e resumo
+• *HISTÓRICO* - Ver seus recibos anteriores
+• *RELATÓRIO* - Relatório financeiro
 • *UPGRADE* - Ver planos disponíveis`;
         }
         break;
