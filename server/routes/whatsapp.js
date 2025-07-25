@@ -95,6 +95,21 @@ router.post('/webhook', async (req, res) => {
 
     console.log(`📱 Message from ${userPhone}: ${Body}`);
 
+    // Ensure user exists in database (create if first time)
+    const cleanPhone = userPhone.replace('whatsapp:', '').replace('+', '');
+    let user = await userService.getUserByPhone(cleanPhone);
+    
+    if (!user) {
+      console.log(`👤 Creating new user for ${cleanPhone}`);
+      user = await userService.createUser({
+        phone: cleanPhone,
+        name: 'Usuário WhatsApp',
+        email: `${cleanPhone}@whatsapp.temp`,
+        plan: 'FREE'
+      });
+      console.log(`✅ User created successfully: ${user.phone}`);
+    }
+
     // Get or create user session
     let session = userSessions.get(userPhone) || {
       state: CONVERSATION_STATES.START,
