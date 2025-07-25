@@ -224,14 +224,24 @@ Digite *OI* para criar um recibo.`;
             
             if (!canGenerate) {
               const stats = await userService.getUserStats(cleanPhone);
-              responseMessage = `⚠️ *Limite atingido!*
+              
+              // Ensure stats object exists and has required properties
+              if (!stats) {
+                responseMessage = `❌ *Erro interno*
+                
+Não foi possível verificar seu plano. Tente novamente em alguns minutos.
 
-Você já usou ${stats.receiptsThisMonth}/${stats.monthlyLimit} recibos do plano ${stats.planName} este mês.
+Digite *OI* para tentar novamente.`;
+              } else {
+                responseMessage = `⚠️ *Limite atingido!*
+
+Você já usou ${stats.currentMonthUsage}/${stats.monthlyLimit} recibos do plano ${stats.planName} este mês.
 
 🚀 *Faça upgrade para continuar:*
-${process.env.PUBLIC_URL || 'https://recibolegal2025.loca.lt'}/plans
+${process.env.PUBLIC_URL || 'https://recibolegal.com.br'}/plans
 
 Digite *OI* para criar um novo recibo quando fizer o upgrade.`;
+              }
               
               // Reset session
               session = { state: CONVERSATION_STATES.START, data: {} };
