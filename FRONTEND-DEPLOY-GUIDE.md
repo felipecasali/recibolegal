@@ -90,19 +90,30 @@ cd /opt/recibolegal
 
 Se você encontrar o erro do Firebase com optional chaining (`?.`), significa que o servidor está usando uma versão antiga do Node.js.
 
-**Solução Rápida:**
+**Solução Ultra Rápida** (sem Docker):
+```bash
+cd /opt/recibolegal
+git pull origin main
+./ultra-quick-fix.sh
+```
+
+**Solução Rápida** (com Docker):
 ```bash
 cd /opt/recibolegal
 git pull origin main
 ./quick-node-fix.sh
 ```
 
-**Solução Completa:**
+**Solução Completa** (diagnóstico completo):
 ```bash
 cd /opt/recibolegal
 git pull origin main
 ./fix-node-deploy.sh
 ```
+
+### **Erro: "No such file or directory" nos scripts**
+
+Se você encontrar erros sobre arquivos não encontrados (Dockerfile, docker-compose.prod.yml), use a **solução ultra rápida** que não depende do Docker.
 
 ### **Se algo der errado:**
 
