@@ -137,7 +137,7 @@ function App() {
                 <span className="stat-label">empresas ativas</span>
               </div>
               <div className="stat">
-                <span className="stat-number">4.9/5</span>
+                <span className="stat-number">4.9 /5</span>
                 <span className="stat-label">avaliação média</span>
               </div>
             </div>
