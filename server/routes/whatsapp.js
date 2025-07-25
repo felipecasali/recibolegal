@@ -96,15 +96,15 @@ router.post('/webhook', async (req, res) => {
     console.log(`📱 Message from ${userPhone}: ${Body}`);
 
     // Ensure user exists in database (create if first time)
-    const cleanPhone = userPhone.replace('whatsapp:', '').replace('+', '');
-    let user = await userService.getUserByPhone(cleanPhone);
+    const normalizedPhone = userService.cleanPhoneNumber(userPhone);
+    let user = await userService.getUserByPhone(normalizedPhone);
     
     if (!user) {
-      console.log(`👤 Creating new user for ${cleanPhone}`);
+      console.log(`👤 Creating new user for ${normalizedPhone}`);
       user = await userService.createUser({
-        phone: cleanPhone,
+        phone: normalizedPhone,
         name: 'Usuário WhatsApp',
-        email: `${cleanPhone}@whatsapp.temp`,
+        email: `${normalizedPhone.replace('+', '')}@whatsapp.temp`,
         plan: 'FREE'
       });
       console.log(`✅ User created successfully: ${user.phone}`);
@@ -127,8 +127,8 @@ router.post('/webhook', async (req, res) => {
         } else if (message.includes('status') || message.includes('plano') || message.includes('assinatura')) {
           // Check user status
           try {
-            const cleanPhone = userPhone.replace('whatsapp:', '').replace('+', '');
-            const stats = await userService.getUserStats(cleanPhone);
+            const normalizedPhone = userService.cleanPhoneNumber(userPhone);
+            const stats = await userService.getUserStats(normalizedPhone);
             
             if (!stats) {
               responseMessage = `📊 *Status da conta:* Plano Gratuito (5 recibos/mês)
@@ -243,11 +243,11 @@ Digite *OI* para criar um recibo.`;
         if (message === 'sim' || message === 's') {
           // Check if user can generate receipt before proceeding
           try {
-            const cleanPhone = userPhone.replace('whatsapp:', '').replace('+', '');
-            const canGenerate = await userService.canGenerateReceipt(cleanPhone);
+            const normalizedPhone = userService.cleanPhoneNumber(userPhone);
+            const canGenerate = await userService.canGenerateReceipt(normalizedPhone);
             
             if (!canGenerate) {
-              const stats = await userService.getUserStats(cleanPhone);
+              const stats = await userService.getUserStats(normalizedPhone);
               
               // Ensure stats object exists and has required properties
               if (!stats) {
@@ -276,7 +276,7 @@ Digite *OI* para criar um novo recibo quando fizer o upgrade.`;
             const axios = require('axios');
             const receiptResponse = await axios.post('http://localhost:3001/api/receipts/generate', {
               ...session.data,
-              userPhone: userPhone
+              userPhone: normalizedPhone
             });
 
             if (receiptResponse.status === 200) {
