@@ -1,0 +1,11 @@
+Deploy Test #2 - Testing GitHub Secrets Configuration
+
+This file tests if GitHub Actions secrets are properly configured:
+- HOST: recibolegal.com.br
+- USERNAME: root
+- SSH_KEY: Private SSH key
+
+If this deploy works, all secrets are configured correctly!
+
+Timestamp: July 26, 2025 - 11:37 UTC
+Test ID: GITHUB-SECRETS-TEST-002
