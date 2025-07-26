@@ -1,4 +1,43 @@
-# 🚀 Instruções de Deploy - Correção Frontend ReciboLegal
+# 🚀 Instruções de Deploy - Correçã### **5. Verifi### **6. Verificar se o build do fr### **9. Rebuild e restart dos containers**
+```bash
+# OBRIGATÓRIO: --build --force-recreate devido às mudanças no Dockerfile
+docker-compose -f docker-compose.prod.yml up -d --build --force-recreate
+```
+
+### **10. Aguardar inicialização dos serviços**
+```bash
+sleep 45
+# Tempo maior devido ao rebuild completo
+```
+
+### **11. Verificar status dos containers**te**
+```bash
+ls -la dist/
+# Deve mostrar: assets/, index.html, vite.svg
+```
+
+### **7. Se necessário, fazer novo build do frontend**
+```bash
+# Só execute se o diretório dist/ estiver vazio ou desatualizado
+npm run build
+```
+
+### **8. ⚠️ ATENÇÃO: Rebuild obrigatório devido a mudanças no Dockerfile**
+```bash
+# IMPORTANTE: As mudanças no Dockerfile requerem rebuild completo
+docker-compose -f docker-compose.prod.yml down
+```
+
+### **9. Rebuild e restart dos containers**foi aplicada**
+```bash
+grep -n "dist" server/index.js
+# Deve mostrar as linhas com 'dist' em vez de 'public'
+
+grep -n "COPY.*dist.*dist" Dockerfile  
+# Deve mostrar: COPY --from=frontend-build /app/dist ./dist
+```
+
+### **6. Verificar se o build do frontend existe**end ReciboLegal
 
 ## 🎯 **Problema Resolvido**
 - ✅ Express configurado para servir assets do `dist/` (Vite build)
@@ -25,7 +64,15 @@ cp server/index.js server/index.js.backup-$(date +%Y%m%d_%H%M%S)
 git pull origin main
 ```
 
-### **4. Verificar se a correção foi aplicada**
+### **4. IMPORTANTE: Verificar se houve erro 500**
+```bash
+# Se você testou antes e recebeu erro 500, isso foi corrigido
+# A correção ajusta os caminhos do Docker corretamente
+curl -I https://recibolegal.com.br/api/health
+# Deve retornar 200 se o container ainda estiver rodando
+```
+
+### **5. Verificar se a correção foi aplicada**
 ```bash
 grep -n "dist" server/index.js
 # Deve mostrar as linhas com 'dist' em vez de 'public'
