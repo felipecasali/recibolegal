@@ -49,22 +49,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'ReciboLegal API is running' });
 });
 
-// Serve static files from the React build
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from the React build (Vite generates in 'dist')
+app.use(express.static(path.join(__dirname, '..', 'dist')));
 
-// Handle React router - serve index.html for all non-API routes
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/plans', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/checkout', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
+// Dashboard específico (ainda usa public)
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
@@ -85,7 +73,7 @@ app.use((req, res, next) => {
   }
   
   // Serve React app for any other route
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'dist', 'index.html'));
 });
 
 // Error handling middleware
