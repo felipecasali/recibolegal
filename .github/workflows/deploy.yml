@@ -39,25 +39,51 @@ jobs:
         npm test
         
     - name: Deploy to server
-      uses: appleboy/ssh-action@v0.1.5
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_KEY }}
+        port: 22
+        timeout: 60s
+        command_timeout: 30m
         script: |
-          cd /opt/recibolegal
-          git pull origin main
-          docker-compose -f docker-compose.prod.yml build
-          docker-compose -f docker-compose.prod.yml up -d
+          # Debug info
+          echo "🔍 SSH connection successful!"
+          echo "📁 Current directory: $(pwd)"
+          echo "👤 User: $(whoami)"
+          echo "🏠 Home: $HOME"
           
-          # Wait for application to start
-          sleep 30
+          # Navigate to project
+          cd /opt/recibolegal || { echo "❌ Directory /opt/recibolegal not found"; exit 1; }
+          echo "📂 Project directory: $(pwd)"
           
-          # Health check
+          # Update code
+          echo "📥 Pulling latest code..."
+          git pull origin main || { echo "❌ Git pull failed"; exit 1; }
+          
+          # Build and deploy
+          echo "🐳 Building containers..."
+          docker-compose -f docker-compose.prod.yml build || { echo "❌ Docker build failed"; exit 1; }
+          
+          echo "🚀 Starting containers..."
+          docker-compose -f docker-compose.prod.yml up -d || { echo "❌ Container start failed"; exit 1; }
+          
+          # Wait and health check
+          echo "⏳ Waiting for services to start..."
+          sleep 45
+          
+          echo "📊 Container status:"
+          docker-compose -f docker-compose.prod.yml ps
+          
+          echo "🏥 Running health check..."
           if curl -f http://localhost:3001/api/health; then
             echo "✅ Deploy successful!"
+            echo "🌐 Site available at: https://recibolegal.com.br"
           else
-            echo "❌ Deploy failed!"
+            echo "❌ Health check failed!"
+            echo "📋 Container logs:"
+            docker-compose -f docker-compose.prod.yml logs --tail=20 recibolegal
             exit 1
           fi
           
