@@ -19,8 +19,11 @@ RUN npm ci --omit=dev && npm cache clean --force
 # Copy server code
 COPY server/ ./
 
-# Copy built frontend
-COPY --from=frontend-build /app/dist ./public
+# Copy built frontend to dist directory (matching Vite output)
+COPY --from=frontend-build /app/dist ./dist
+
+# Copy server public files (dashboard, etc.)
+COPY server/public ./public
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
