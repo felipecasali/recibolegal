@@ -15,6 +15,96 @@ const WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+1415523
 // User session storage (in production, use Redis or database)
 const userSessions = new Map();
 
+// Function to send WhatsApp message with interactive buttons
+async function sendWhatsAppMessageWithButtons(to, text, buttons) {
+  try {
+    const formattedTo = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+    
+    // Check if simulation mode is enabled
+    if (process.env.TWILIO_SIMULATION_MODE === 'true') {
+      console.log(`🧪 SIMULATION MODE: Interactive message would be sent to ${formattedTo}`);
+      console.log(`📱 Text: "${text}"`);
+      console.log(`🔘 Buttons:`, buttons.map(b => `"${b.reply.title}" (${b.reply.id})`).join(', '));
+      return;
+    }
+
+    const client = getTwilioClient();
+    
+    // Create interactive message with reply buttons
+    const message = {
+      from: WHATSAPP_NUMBER,
+      to: formattedTo,
+      contentSid: null, // We'll create the content programmatically
+      body: text,
+      // Interactive message structure for Twilio
+      persistent_action: buttons.map(button => ({
+        title: button.reply.title,
+        id: button.reply.id
+      }))
+    };
+
+    // For now, send as regular message with button options
+    // (Twilio's interactive messages require specific setup)
+    const buttonText = buttons.map((btn, index) => 
+      `${index + 1}️⃣ *${btn.reply.title}*`
+    ).join('\n');
+    
+    const fullMessage = `${text}\n\n${buttonText}\n\n💡 _Responda com o número ou texto da opção_`;
+    
+    await client.messages.create({
+      body: fullMessage,
+      from: WHATSAPP_NUMBER,
+      to: formattedTo
+    });
+    
+    console.log(`✅ Interactive message sent to ${formattedTo}`);
+  } catch (error) {
+    console.error('❌ Error sending interactive message:', error);
+    // Fallback to regular message
+    await sendWhatsAppMessage(to, text);
+  }
+}
+
+// Function to send WhatsApp list message
+async function sendWhatsAppListMessage(to, text, buttonText, sections) {
+  try {
+    const formattedTo = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+    
+    if (process.env.TWILIO_SIMULATION_MODE === 'true') {
+      console.log(`🧪 SIMULATION MODE: List message would be sent to ${formattedTo}`);
+      console.log(`📱 Text: "${text}"`);
+      console.log(`📋 Sections:`, sections);
+      return;
+    }
+
+    const client = getTwilioClient();
+    
+    // Create list options text
+    let listText = text + '\n\n';
+    sections.forEach((section, sIndex) => {
+      if (section.title) listText += `*${section.title}*\n`;
+      section.rows.forEach((row, rIndex) => {
+        listText += `${sIndex + 1}.${rIndex + 1} ${row.title}\n`;
+        if (row.description) listText += `   _${row.description}_\n`;
+      });
+      listText += '\n';
+    });
+    
+    listText += `💡 _Responda com o número da opção_`;
+
+    await client.messages.create({
+      body: listText,
+      from: WHATSAPP_NUMBER,
+      to: formattedTo
+    });
+    
+    console.log(`✅ List message sent to ${formattedTo}`);
+  } catch (error) {
+    console.error('❌ Error sending list message:', error);
+    await sendWhatsAppMessage(to, text);
+  }
+}
+
 // Bot conversation flow states
 const CONVERSATION_STATES = {
   START: 'start',
@@ -146,14 +236,150 @@ Digite seu novo CPF ou CNPJ:
 Digite *OI* para criar um recibo ou *PERFIL* para fazer mais alterações.`
 };
 
+// Interactive button definitions
+const INTERACTIVE_BUTTONS = {
+  // Profile editing buttons
+  profileMenu: [
+    { reply: { id: 'edit_name', title: '✏️ Editar Nome' } },
+    { reply: { id: 'edit_document', title: '📄 Editar CPF/CNPJ' } },
+    { reply: { id: 'back_main', title: '↩️ Voltar' } }
+  ],
+  
+  // Confirmation buttons
+  confirmation: [
+    { reply: { id: 'confirm_yes', title: '✅ Confirmar' } },
+    { reply: { id: 'confirm_no', title: '❌ Refazer' } }
+  ],
+  
+  // Service description buttons
+  serviceDescription: [
+    { reply: { id: 'skip_description', title: '⏭️ Pular descrição' } },
+    { reply: { id: 'add_description', title: '📝 Adicionar descrição' } }
+  ],
+  
+  // Date options
+  dateOptions: [
+    { reply: { id: 'date_today', title: '📅 Hoje' } },
+    { reply: { id: 'date_custom', title: '📝 Outra data' } }
+  ],
+  
+  // Main menu
+  mainMenu: [
+    { reply: { id: 'create_receipt', title: '📄 Criar Recibo' } },
+    { reply: { id: 'view_profile', title: '👤 Meu Perfil' } },
+    { reply: { id: 'view_history', title: '📋 Histórico' } }
+  ],
+  
+  // After receipt creation
+  afterReceipt: [
+    { reply: { id: 'new_receipt', title: '📋 Novo Recibo' } },
+    { reply: { id: 'edit_profile', title: '⚙️ Meu Perfil' } },
+    { reply: { id: 'help', title: '❓ Ajuda' } }
+  ]
+};
+
+// List menu definitions for complex menus
+const LIST_MENUS = {
+  mainMenu: {
+    text: '🏠 *Menu Principal ReciboLegal*\n\nEscolha uma opção:',
+    buttonText: 'Ver Opções',
+    sections: [
+      {
+        title: '📄 Recibos',
+        rows: [
+          { id: 'create_receipt', title: 'Criar Novo Recibo', description: 'Gerar recibo profissional' },
+          { id: 'view_history', title: 'Ver Histórico', description: 'Seus últimos recibos' }
+        ]
+      },
+      {
+        title: '⚙️ Configurações',
+        rows: [
+          { id: 'view_profile', title: 'Meu Perfil', description: 'Ver/editar dados pessoais' },
+          { id: 'view_status', title: 'Status da Conta', description: 'Plano atual e uso' },
+          { id: 'upgrade_plan', title: 'Fazer Upgrade', description: 'Ver planos disponíveis' }
+        ]
+      }
+    ]
+  }
+};
+
+// Function to handle button responses and text alternatives
+function processButtonResponse(message, buttonId = null) {
+  // If we have a button ID, use it directly
+  if (buttonId) return buttonId;
+  
+  // Otherwise, map common text responses to button IDs
+  const textMappings = {
+    // Profile menu
+    '1': 'edit_name',
+    'nome': 'edit_name',
+    'editar nome': 'edit_name',
+    '2': 'edit_document', 
+    'documento': 'edit_document',
+    'cpf': 'edit_document',
+    'cnpj': 'edit_document',
+    '3': 'back_main',
+    'sair': 'back_main',
+    'voltar': 'back_main',
+    
+    // Confirmation
+    'sim': 'confirm_yes',
+    's': 'confirm_yes',
+    'confirmar': 'confirm_yes',
+    'não': 'confirm_no',
+    'nao': 'confirm_no',
+    'n': 'confirm_no',
+    'refazer': 'confirm_no',
+    
+    // Service description
+    'pular': 'skip_description',
+    'skip': 'skip_description',
+    
+    // Date
+    'hoje': 'date_today',
+    'outra': 'date_custom',
+    'outra data': 'date_custom',
+    'personalizada': 'date_custom',
+    
+    // Main menu
+    'oi': 'create_receipt',
+    'olá': 'create_receipt',
+    'criar': 'create_receipt',
+    'recibo': 'create_receipt',
+    'perfil': 'view_profile',
+    'profile': 'view_profile',
+    'histórico': 'view_history',
+    'historico': 'view_history',
+    'history': 'view_history',
+    'status': 'view_status',
+    'plano': 'view_status',
+    'upgrade': 'upgrade_plan',
+    
+    // After receipt actions
+    'novo': 'new_receipt',
+    'novo recibo': 'new_receipt',
+    'ajuda': 'help',
+    'help': 'help'
+  };
+  
+  const normalizedMessage = message.toLowerCase().trim();
+  return textMappings[normalizedMessage] || null;
+}
+
 // Webhook endpoint for WhatsApp messages
 router.post('/webhook', async (req, res) => {
   try {
-    const { Body, From, To } = req.body;
+    const { Body, From, To, ButtonPayload } = req.body;
     const userPhone = From;
     const message = Body?.trim().toLowerCase();
+    
+    // Check if this is a button response
+    const buttonId = ButtonPayload || null;
+    const processedAction = processButtonResponse(message, buttonId);
 
     console.log(`📱 Message from ${userPhone}: ${Body}`);
+    if (buttonId) console.log(`🔘 Button pressed: ${buttonId}`);
+    if (processedAction) console.log(`⚡ Action: ${processedAction}`);
 
     // Ensure user exists in database (create if first time)
     const normalizedPhone = userService.cleanPhoneNumber(userPhone);
@@ -239,15 +465,28 @@ Digite seu CPF ou CNPJ:`;
         break;
 
       case CONVERSATION_STATES.START:
-        if (message.includes('oi') || message.includes('olá') || message.includes('começar')) {
+        // Handle button responses first
+        if (processedAction === 'create_receipt' || processedAction === 'new_receipt' || message.includes('oi') || message.includes('olá') || message.includes('começar')) {
           const userName = user.fullName || 'Usuário';
           responseMessage = BOT_MESSAGES.welcome(userName);
           session.state = CONVERSATION_STATES.COLLECTING_CLIENT_NAME;
-        } else if (message.includes('perfil') || message.includes('profile') || message.includes('editar')) {
-          // Show profile editing options
-          responseMessage = BOT_MESSAGES.profileOptions(user);
+        } else if (processedAction === 'view_profile' || processedAction === 'edit_profile' || message.includes('perfil') || message.includes('profile') || message.includes('editar')) {
+          // Show profile editing options with buttons
+          const profileText = `⚙️ *Meu Perfil*
+
+*Dados atuais:*
+👤 Nome: ${user.fullName || 'Não informado'}
+📄 CPF/CNPJ: ${user.cpfCnpj || 'Não informado'}
+
+Escolha uma opção:`;
+
+          await sendWhatsAppMessageWithButtons(userPhone, profileText, INTERACTIVE_BUTTONS.profileMenu);
           session.state = CONVERSATION_STATES.EDITING_PROFILE;
-        } else if (message.includes('status') || message.includes('plano') || message.includes('assinatura')) {
+          
+          // Save session and return early since we already sent the message
+          userSessions.set(userPhone, session);
+          return res.status(200).send('OK');
+        } else if (processedAction === 'view_status' || message.includes('status') || message.includes('plano') || message.includes('assinatura')) {
           // Check user status
           try {
             const normalizedPhone = userService.cleanPhoneNumber(userPhone);
@@ -289,6 +528,30 @@ Digite *OI* para criar um recibo ou *UPGRADE* para ver planos.`;
 ${process.env.PUBLIC_URL || 'https://recibolegal2025.loca.lt'}/plans
 
 Digite *OI* para criar um recibo.`;
+        } else if (processedAction === 'help' || message.includes('ajuda') || message.includes('help')) {
+          responseMessage = `❓ *Ajuda - ReciboLegal*
+
+🤔 *Como funciona:*
+1. Digite *OI* para começar
+2. Informe os dados do cliente
+3. Descreva o serviço prestado
+4. Confirme o valor e data
+5. Seu recibo será gerado!
+
+📋 *Comandos úteis:*
+• *OI* - Criar novo recibo
+• *PERFIL* - Ver/editar seus dados
+• *STATUS* - Ver uso do plano
+• *HISTÓRICO* - Seus recibos anteriores
+
+💬 *Dúvidas frequentes:*
+• O recibo é válido legalmente? Sim!
+• Posso editar meus dados? Sim, digite PERFIL
+• Como fazer upgrade? Digite UPGRADE
+
+📞 *Suporte:* contato@recibolegal.com.br
+
+Digite *OI* para criar um recibo agora!`;
         } else if (message.includes('dashboard') || message.includes('painel') || message.includes('resumo')) {
           // Dashboard do usuário
           try {
@@ -387,19 +650,41 @@ Digite *OI* para criar um recibo.`;
 
       // Profile editing states
       case CONVERSATION_STATES.EDITING_PROFILE:
-        if (message.includes('nome') || message === '1') {
+        if (processedAction === 'edit_name' || message.includes('nome') || message === '1') {
           session.state = CONVERSATION_STATES.EDITING_USER_NAME;
           responseMessage = BOT_MESSAGES.editName;
-        } else if (message.includes('documento') || message === '2') {
+        } else if (processedAction === 'edit_document' || message.includes('documento') || message === '2') {
           session.state = CONVERSATION_STATES.EDITING_USER_DOCUMENT;
           responseMessage = BOT_MESSAGES.editDocument;
-        } else if (message.includes('sair') || message === '3') {
+        } else if (processedAction === 'back_main' || message.includes('sair') || message === '3') {
           session = { state: CONVERSATION_STATES.START, data: {} };
-          responseMessage = `👋 Voltando ao menu principal.
-
-Digite *OI* para criar um recibo.`;
+          
+          // Show main menu with buttons
+          await sendWhatsAppListMessage(
+            userPhone, 
+            LIST_MENUS.mainMenu.text,
+            LIST_MENUS.mainMenu.buttonText,
+            LIST_MENUS.mainMenu.sections
+          );
+          
+          // Save session and return early
+          userSessions.set(userPhone, session);
+          return res.status(200).send('OK');
         } else {
-          responseMessage = BOT_MESSAGES.profileOptions(user);
+          // Re-show profile options with buttons
+          const profileText = `⚙️ *Meu Perfil*
+
+*Dados atuais:*
+👤 Nome: ${user.fullName || 'Não informado'}
+📄 CPF/CNPJ: ${user.cpfCnpj || 'Não informado'}
+
+Escolha uma opção:`;
+
+          await sendWhatsAppMessageWithButtons(userPhone, profileText, INTERACTIVE_BUTTONS.profileMenu);
+          
+          // Save session and return early
+          userSessions.set(userPhone, session);
+          return res.status(200).send('OK');
         }
         break;
 
@@ -470,11 +755,35 @@ Digite seu novo CPF ou CNPJ:`;
         break;
 
       case CONVERSATION_STATES.COLLECTING_SERVICE_DESCRIPTION:
-        if (message === 'pular') {
+        if (processedAction === 'skip_description' || message === 'pular' || message === '2') {
           session.data.serviceDescription = '';
+        } else if (processedAction === 'add_description' || message === '1' || (message.trim().length > 5 && !message.includes('pular'))) {
+          // If user selected "add description" but hasn't provided it yet, ask for it
+          if (processedAction === 'add_description' || message === '1') {
+            responseMessage = '📝 *Descreva detalhes do serviço:*\n\nExemplo: "Consultoria em marketing digital com estratégias personalizadas"';
+            // Stay in same state waiting for actual description
+            break;
+          } else {
+            // User provided actual description
+            session.data.serviceDescription = Body.trim();
+          }
         } else {
-          session.data.serviceDescription = Body.trim();
+          // Show description options with buttons
+          const descriptionText = `📝 *Deseja adicionar uma descrição detalhada do serviço?*
+
+Uma descrição pode incluir:
+• Detalhes técnicos do trabalho
+• Metodologia utilizada  
+• Resultados esperados
+• Especificações do projeto`;
+
+          await sendWhatsAppMessageWithButtons(userPhone, descriptionText, INTERACTIVE_BUTTONS.serviceDescription);
+          
+          // Save session and return early
+          userSessions.set(userPhone, session);
+          return res.status(200).send('OK');
         }
+        
         session.state = CONVERSATION_STATES.COLLECTING_AMOUNT;
         responseMessage = BOT_MESSAGES.amount;
         break;
@@ -492,25 +801,49 @@ Digite seu novo CPF ou CNPJ:`;
 
       case CONVERSATION_STATES.COLLECTING_DATE:
         let date;
-        if (message === 'hoje') {
+        if (processedAction === 'date_today' || message === 'hoje' || message === '1') {
           date = new Date().toLocaleDateString('pt-BR');
-        } else {
-          // Simple date validation
-          const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
-          if (dateRegex.test(Body.trim())) {
-            date = Body.trim();
-          } else {
-            responseMessage = `❌ Data inválida. Use o formato DD/MM/AAAA (exemplo: 23/07/2025) ou digite "hoje":`;
+        } else if (processedAction === 'date_custom' || message === '2' || message.includes('/')) {
+          // Handle custom date input
+          if (message === '2' || processedAction === 'date_custom') {
+            // User selected custom date option, ask for input
+            responseMessage = '📅 *Digite a data do serviço:*\n\nUse o formato DD/MM/AAAA\nExemplo: 23/07/2025';
+            // Stay in same state waiting for actual date input
             break;
+          } else {
+            // Simple date validation for custom input
+            const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+            if (dateRegex.test(Body.trim())) {
+              date = Body.trim();
+            } else {
+              responseMessage = `❌ Data inválida. Use o formato DD/MM/AAAA (exemplo: 23/07/2025):`;
+              break;
+            }
           }
+        } else {
+          // Show date options with buttons
+          const dateText = '📅 *Qual a data do serviço prestado?*';
+          await sendWhatsAppMessageWithButtons(userPhone, dateText, INTERACTIVE_BUTTONS.dateOptions);
+          
+          // Save session and return early
+          userSessions.set(userPhone, session);
+          return res.status(200).send('OK');
         }
+        
         session.data.date = date;
         session.state = CONVERSATION_STATES.CONFIRMING;
-        responseMessage = BOT_MESSAGES.confirmation(session.data);
+        
+        // Send confirmation with buttons
+        const confirmText = BOT_MESSAGES.confirmation(session.data);
+        await sendWhatsAppMessageWithButtons(userPhone, confirmText, INTERACTIVE_BUTTONS.confirmation);
+        
+        // Save session and return early
+        userSessions.set(userPhone, session);
+        return res.status(200).send('OK');
         break;
 
       case CONVERSATION_STATES.CONFIRMING:
-        if (message === 'sim' || message === 's') {
+        if (processedAction === 'confirm_yes' || message === 'sim' || message === 's' || message === '1') {
           // Check if user can generate receipt before proceeding
           try {
             const normalizedPhone = userService.cleanPhoneNumber(userPhone);
@@ -553,10 +886,17 @@ Digite *OI* para criar um novo recibo quando fizer o upgrade.`;
               session.state = CONVERSATION_STATES.COMPLETED;
               responseMessage = BOT_MESSAGES.success;
               
-              // Reset session after a delay
-              setTimeout(() => {
-                userSessions.delete(userPhone);
-              }, 60000);
+              // Show completion options with buttons
+              await sendWhatsAppMessage(userPhone, responseMessage);
+              await sendWhatsAppMessageWithButtons(userPhone, 
+                "O que você gostaria de fazer agora?", 
+                INTERACTIVE_BUTTONS.afterReceipt
+              );
+              
+              // Reset session
+              session = { state: CONVERSATION_STATES.START, data: {} };
+              userSessions.set(userPhone, session);
+              return res.status(200).send('OK');
             } else {
               responseMessage = BOT_MESSAGES.error;
             }
@@ -575,12 +915,18 @@ Digite *OI* quando fizer o upgrade para criar novos recibos.`;
               responseMessage = BOT_MESSAGES.error;
             }
           }
-        } else if (message === 'não' || message === 'nao' || message === 'n') {
+        } else if (processedAction === 'confirm_no' || message === 'não' || message === 'nao' || message === 'n' || message === '2') {
           session = { state: CONVERSATION_STATES.START, data: {} };
           responseMessage = BOT_MESSAGES.restart;
           session.state = CONVERSATION_STATES.COLLECTING_CLIENT_NAME;
         } else {
-          responseMessage = `Por favor, responda com *SIM* ou *NÃO*:`;
+          // Re-show confirmation with buttons
+          const confirmText = BOT_MESSAGES.confirmation(session.data);
+          await sendWhatsAppMessageWithButtons(userPhone, confirmText, INTERACTIVE_BUTTONS.confirmation);
+          
+          // Save session and return early
+          userSessions.set(userPhone, session);
+          return res.status(200).send('OK');
         }
         break;
 
