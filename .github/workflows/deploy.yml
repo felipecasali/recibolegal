@@ -62,9 +62,14 @@ jobs:
           echo "📥 Pulling latest code..."
           git pull origin main || { echo "❌ Git pull failed"; exit 1; }
           
+          # Clean up potential Docker issues (prevents ContainerConfig errors)
+          echo "🧹 Cleaning up Docker system..."
+          docker-compose -f docker-compose.prod.yml down --remove-orphans || true
+          docker system prune -f || true
+          
           # Build and deploy
           echo "🐳 Building containers..."
-          docker-compose -f docker-compose.prod.yml build || { echo "❌ Docker build failed"; exit 1; }
+          docker-compose -f docker-compose.prod.yml build --no-cache || { echo "❌ Docker build failed"; exit 1; }
           
           echo "🚀 Starting containers..."
           docker-compose -f docker-compose.prod.yml up -d || { echo "❌ Container start failed"; exit 1; }
