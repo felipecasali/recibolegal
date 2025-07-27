@@ -960,9 +960,12 @@ Digite *OI* quando fizer o upgrade para criar novos recibos.`;
 // Function to send WhatsApp message
 async function sendWhatsAppMessage(to, message) {
   try {
-    // Remove extra spaces
+    // Remove extra spaces and normalize format
     let formattedTo = to;
-    formattedTo = formattedTo.replace(/\s+/g, '');
+    
+    // Fix common formatting issues
+    formattedTo = formattedTo.replace(/\s+/g, ''); // Remove all spaces
+    formattedTo = formattedTo.replace('whatsapp:', 'whatsapp:'); // Ensure no space after colon
     
     // Normalize to whatsapp:+XXXXXXXXX format
     if (!formattedTo.startsWith('whatsapp:')) {
