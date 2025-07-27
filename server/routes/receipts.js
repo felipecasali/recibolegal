@@ -33,36 +33,46 @@ function generateReceiptPDF(data) {
   doc.text(`Recibo Nº: ${receiptId}`, 20, 60);
   doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 130, 60);
   
-  // Client information
+  // Prestador (Service Provider) information - NEW
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO CLIENTE', 20, 80);
+  doc.text('DADOS DO PRESTADOR', 20, 80);
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
-  doc.text(`Nome: ${data.clientName}`, 20, 95);
-  doc.text(`CPF/CNPJ: ${data.clientDocument}`, 20, 105);
+  doc.text(`Nome: ${data.providerName || 'Não informado'}`, 20, 95);
+  doc.text(`CPF/CNPJ: ${data.providerDocument || 'Não informado'}`, 20, 105);
+  
+  // Client information
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DADOS DO CLIENTE', 20, 125);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text(`Nome: ${data.clientName}`, 20, 140);
+  doc.text(`CPF/CNPJ: ${data.clientDocument}`, 20, 150);
   
   // Service information
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO SERVIÇO', 20, 125);
+  doc.text('DADOS DO SERVIÇO', 20, 170);
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
-  doc.text(`Serviço: ${data.serviceName}`, 20, 140);
+  doc.text(`Serviço: ${data.serviceName}`, 20, 185);
   
   if (data.serviceDescription && data.serviceDescription.trim() !== '') {
     const descriptionLines = doc.splitTextToSize(`Descrição: ${data.serviceDescription}`, 170);
-    doc.text(descriptionLines, 20, 150);
+    doc.text(descriptionLines, 20, 195);
   }
   
-  doc.text(`Data do serviço: ${data.date}`, 20, data.serviceDescription ? 170 : 150);
+  doc.text(`Data do serviço: ${data.date}`, 20, data.serviceDescription ? 215 : 195);
   
   // Amount
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  const amountY = data.serviceDescription ? 190 : 170;
+  const amountY = data.serviceDescription ? 235 : 215;
   doc.text(`VALOR: R$ ${parseFloat(data.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, amountY);
   
   // Amount in words
@@ -215,6 +225,18 @@ router.post('/generate', async (req, res) => {
       }
     }
     
+    // Get user data for provider information (if user exists)
+    let providerName = null;
+    let providerDocument = null;
+    
+    if (userPhone) {
+      const userData = await userService.getUserByPhone(cleanPhone);
+      if (userData && userData.fullName && userData.cpfCnpj) {
+        providerName = userData.fullName;
+        providerDocument = userData.cpfCnpj;
+      }
+    }
+    
     // Generate PDF
     const doc = generateReceiptPDF({
       clientName,
@@ -222,7 +244,9 @@ router.post('/generate', async (req, res) => {
       serviceName,
       serviceDescription,
       amount,
-      date
+      date,
+      providerName,
+      providerDocument
     });
     
     // Create receipts directory if it doesn't exist

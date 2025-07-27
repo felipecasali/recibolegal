@@ -18,6 +18,11 @@ const userSessions = new Map();
 // Bot conversation flow states
 const CONVERSATION_STATES = {
   START: 'start',
+  // User profile states (for first-time users)
+  COLLECTING_USER_NAME: 'collecting_user_name',
+  COLLECTING_USER_DOCUMENT: 'collecting_user_document',
+  PROFILE_COMPLETE: 'profile_complete',
+  // Receipt generation states
   COLLECTING_CLIENT_NAME: 'collecting_client_name',
   COLLECTING_CLIENT_DOCUMENT: 'collecting_client_document',
   COLLECTING_SERVICE_NAME: 'collecting_service_name',
@@ -25,14 +30,38 @@ const CONVERSATION_STATES = {
   COLLECTING_AMOUNT: 'collecting_amount',
   COLLECTING_DATE: 'collecting_date',
   CONFIRMING: 'confirming',
-  COMPLETED: 'completed'
+  COMPLETED: 'completed',
+  // Profile editing states
+  EDITING_PROFILE: 'editing_profile',
+  EDITING_USER_NAME: 'editing_user_name',
+  EDITING_USER_DOCUMENT: 'editing_user_document'
 };
 
 // Bot messages
 const BOT_MESSAGES = {
-  welcome: `🎉 Olá! Bem-vindo ao *ReciboLegal*! 
+  // First-time user setup
+  firstTimeSetup: `🎉 Olá! Bem-vindo ao *ReciboLegal*!
 
-Vou te ajudar a criar um recibo válido juridicamente em alguns passos simples.
+Como é seu primeiro acesso, vou precisar de algumas informações básicas para personalizar seus recibos.
+
+Por favor, me diga seu *nome completo*:`,
+
+  userDocument: `Perfeito! Agora preciso do seu *CPF ou CNPJ*:
+
+💡 Exemplo: 123.456.789-00 ou 12.345.678/0001-90
+
+ℹ️ Essas informações aparecerão nos seus recibos como prestador do serviço.`,
+
+  profileComplete: (name) => `✅ *Perfil configurado com sucesso!*
+
+Olá, ${name}! Agora você pode criar recibos profissionais.
+
+Para começar seu primeiro recibo, me diga o *nome completo do seu cliente*:`,
+
+  // Regular welcome for returning users
+  welcome: (name) => `🎉 Olá novamente, *${name}*!
+
+Vou te ajudar a criar um novo recibo válido juridicamente.
 
 Para começar, me diga o *nome completo do seu cliente*:`,
   
@@ -84,7 +113,37 @@ Digite *RECOMEÇAR* para tentar novamente.`,
 
   restart: `🔄 Vamos recomeçar! 
 
-Me diga o *nome completo do seu cliente*:`
+Me diga o *nome completo do seu cliente*:`,
+
+  // Profile editing messages
+  profileOptions: (userData) => `⚙️ *Meu Perfil*
+
+*Dados atuais:*
+👤 Nome: ${userData.fullName || 'Não informado'}
+📄 CPF/CNPJ: ${userData.cpfCnpj || 'Não informado'}
+
+*Opções:*
+1️⃣ Digite *NOME* para alterar seu nome
+2️⃣ Digite *DOCUMENTO* para alterar CPF/CNPJ
+3️⃣ Digite *SAIR* para voltar ao menu principal`,
+
+  editName: `✏️ *Alterar Nome*
+
+Digite seu novo nome completo:`,
+
+  editDocument: `✏️ *Alterar CPF/CNPJ*
+
+Digite seu novo CPF ou CNPJ:
+
+💡 Exemplo: 123.456.789-00 ou 12.345.678/0001-90`,
+
+  profileUpdated: (userData) => `✅ *Perfil atualizado com sucesso!*
+
+*Novos dados:*
+👤 Nome: ${userData.fullName}
+📄 CPF/CNPJ: ${userData.cpfCnpj}
+
+Digite *OI* para criar um recibo ou *PERFIL* para fazer mais alterações.`
 };
 
 // Webhook endpoint for WhatsApp messages
@@ -119,12 +178,75 @@ router.post('/webhook', async (req, res) => {
 
     let responseMessage = '';
 
+    // Check if user profile is complete for first-time users
+    const isProfileComplete = await userService.isProfileComplete(normalizedPhone);
+    
+    // If user doesn't have complete profile and isn't in profile setup flow, redirect to profile setup
+    if (!isProfileComplete && 
+        session.state !== CONVERSATION_STATES.COLLECTING_USER_NAME && 
+        session.state !== CONVERSATION_STATES.COLLECTING_USER_DOCUMENT &&
+        !message.includes('perfil') && !message.includes('profile') &&
+        !message.includes('editar') && !message.includes('edit')) {
+      
+      if (session.state === CONVERSATION_STATES.START && 
+          (message.includes('oi') || message.includes('olá') || message.includes('começar'))) {
+        responseMessage = BOT_MESSAGES.firstTimeSetup;
+        session.state = CONVERSATION_STATES.COLLECTING_USER_NAME;
+      } else if (session.state === CONVERSATION_STATES.START) {
+        responseMessage = `🎉 Olá! Para começar, preciso que você complete seu perfil.
+
+${BOT_MESSAGES.firstTimeSetup}`;
+        session.state = CONVERSATION_STATES.COLLECTING_USER_NAME;
+      }
+    }
+
     // Handle conversation flow
     switch (session.state) {
+      // Profile setup states for first-time users
+      case CONVERSATION_STATES.COLLECTING_USER_NAME:
+        if (Body && Body.trim()) {
+          session.data.userFullName = Body.trim();
+          session.state = CONVERSATION_STATES.COLLECTING_USER_DOCUMENT;
+          responseMessage = BOT_MESSAGES.userDocument;
+        } else {
+          responseMessage = `Por favor, digite seu nome completo:`;
+        }
+        break;
+
+      case CONVERSATION_STATES.COLLECTING_USER_DOCUMENT:
+        if (Body && Body.trim()) {
+          session.data.userCpfCnpj = Body.trim();
+          
+          // Update user profile in database
+          try {
+            await userService.updateUserProfile(normalizedPhone, {
+              fullName: session.data.userFullName,
+              cpfCnpj: session.data.userCpfCnpj
+            });
+            
+            responseMessage = BOT_MESSAGES.profileComplete(session.data.userFullName);
+            session.state = CONVERSATION_STATES.COLLECTING_CLIENT_NAME;
+            session.data = {}; // Clear profile data, keep session for receipt creation
+          } catch (error) {
+            console.error('Error updating user profile:', error);
+            responseMessage = `❌ Erro ao salvar perfil. Tente novamente.
+
+Digite seu CPF ou CNPJ:`;
+          }
+        } else {
+          responseMessage = `Por favor, digite seu CPF ou CNPJ:`;
+        }
+        break;
+
       case CONVERSATION_STATES.START:
         if (message.includes('oi') || message.includes('olá') || message.includes('começar')) {
-          responseMessage = BOT_MESSAGES.welcome;
+          const userName = user.fullName || 'Usuário';
+          responseMessage = BOT_MESSAGES.welcome(userName);
           session.state = CONVERSATION_STATES.COLLECTING_CLIENT_NAME;
+        } else if (message.includes('perfil') || message.includes('profile') || message.includes('editar')) {
+          // Show profile editing options
+          responseMessage = BOT_MESSAGES.profileOptions(user);
+          session.state = CONVERSATION_STATES.EDITING_PROFILE;
         } else if (message.includes('status') || message.includes('plano') || message.includes('assinatura')) {
           // Check user status
           try {
@@ -191,7 +313,7 @@ ${dashboard.charts.topServices.slice(0, 3).map((s, i) =>
 🔗 *Dashboard completo:*
 ${process.env.PUBLIC_URL || 'https://recibolegal.com.br'}/dashboard
 
-Digite *HISTÓRICO* para ver seus recibos ou *OI* para criar novo.`;
+Digite *HISTÓRICO* para ver seus recibos, *PERFIL* para editar dados ou *OI* para criar novo.`;
           } catch (error) {
             responseMessage = `📊 *Dashboard indisponível no momento.*
 
@@ -260,6 +382,66 @@ Digite *OI* para criar um recibo.`;
 • *HISTÓRICO* - Ver seus recibos anteriores
 • *RELATÓRIO* - Relatório financeiro
 • *UPGRADE* - Ver planos disponíveis`;
+        }
+        break;
+
+      // Profile editing states
+      case CONVERSATION_STATES.EDITING_PROFILE:
+        if (message.includes('nome') || message === '1') {
+          session.state = CONVERSATION_STATES.EDITING_USER_NAME;
+          responseMessage = BOT_MESSAGES.editName;
+        } else if (message.includes('documento') || message === '2') {
+          session.state = CONVERSATION_STATES.EDITING_USER_DOCUMENT;
+          responseMessage = BOT_MESSAGES.editDocument;
+        } else if (message.includes('sair') || message === '3') {
+          session = { state: CONVERSATION_STATES.START, data: {} };
+          responseMessage = `👋 Voltando ao menu principal.
+
+Digite *OI* para criar um recibo.`;
+        } else {
+          responseMessage = BOT_MESSAGES.profileOptions(user);
+        }
+        break;
+
+      case CONVERSATION_STATES.EDITING_USER_NAME:
+        if (Body && Body.trim()) {
+          try {
+            const updatedUser = await userService.updateUserProfile(normalizedPhone, {
+              fullName: Body.trim(),
+              cpfCnpj: user.cpfCnpj
+            });
+            
+            session = { state: CONVERSATION_STATES.START, data: {} };
+            responseMessage = BOT_MESSAGES.profileUpdated(updatedUser);
+          } catch (error) {
+            console.error('Error updating user name:', error);
+            responseMessage = `❌ Erro ao atualizar nome. Tente novamente.
+
+Digite seu novo nome completo:`;
+          }
+        } else {
+          responseMessage = `Por favor, digite seu novo nome completo:`;
+        }
+        break;
+
+      case CONVERSATION_STATES.EDITING_USER_DOCUMENT:
+        if (Body && Body.trim()) {
+          try {
+            const updatedUser = await userService.updateUserProfile(normalizedPhone, {
+              fullName: user.fullName,
+              cpfCnpj: Body.trim()
+            });
+            
+            session = { state: CONVERSATION_STATES.START, data: {} };
+            responseMessage = BOT_MESSAGES.profileUpdated(updatedUser);
+          } catch (error) {
+            console.error('Error updating user document:', error);
+            responseMessage = `❌ Erro ao atualizar documento. Tente novamente.
+
+Digite seu novo CPF ou CNPJ:`;
+          }
+        } else {
+          responseMessage = `Por favor, digite seu novo CPF ou CNPJ:`;
         }
         break;
 

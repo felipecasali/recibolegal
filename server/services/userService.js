@@ -51,6 +51,10 @@ class UserService {
             stripeCustomerId: null,
             stripeSubscriptionId: null,
             subscriptionStatus: 'active',
+            // User profile fields for receipts
+            fullName: userData.fullName || null,
+            cpfCnpj: userData.cpfCnpj || null,
+            profileComplete: !!(userData.fullName && userData.cpfCnpj),
             createdAt: new Date(),
             updatedAt: new Date()
           };
@@ -79,6 +83,10 @@ class UserService {
           stripeCustomerId: null,
           stripeSubscriptionId: null,
           subscriptionStatus: 'active',
+          // User profile fields for receipts
+          fullName: userData.fullName || null,
+          cpfCnpj: userData.cpfCnpj || null,
+          profileComplete: !!(userData.fullName && userData.cpfCnpj),
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         };
@@ -306,6 +314,53 @@ class UserService {
     } catch (error) {
       console.error('Error getting user stats:', error);
       throw error;
+    }
+  }
+
+  // Update user profile information
+  async updateUserProfile(phone, profileData) {
+    try {
+      const { fullName, cpfCnpj } = profileData;
+      
+      if (!isFirebaseEnabled) {
+        const user = inMemoryUsers.get(phone);
+        if (user) {
+          const updatedUser = { 
+            ...user, 
+            fullName, 
+            cpfCnpj,
+            profileComplete: !!(fullName && cpfCnpj),
+            updatedAt: new Date() 
+          };
+          inMemoryUsers.set(phone, updatedUser);
+          return updatedUser;
+        }
+        return null;
+      }
+
+      const userRef = doc(db, this.usersCollection, phone);
+      await updateDoc(userRef, {
+        fullName,
+        cpfCnpj,
+        profileComplete: !!(fullName && cpfCnpj),
+        updatedAt: serverTimestamp()
+      });
+      
+      return await this.getUserByPhone(phone);
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  }
+
+  // Check if user profile is complete
+  async isProfileComplete(phone) {
+    try {
+      const user = await this.getUserByPhone(phone);
+      return user && user.fullName && user.cpfCnpj;
+    } catch (error) {
+      console.error('Error checking profile completeness:', error);
+      return false;
     }
   }
 
