@@ -18,22 +18,22 @@ O secret `HOST` não está configurado no GitHub Actions secrets.
 
 ### **2. Adicionar os seguintes Repository Secrets:**
 
-#### **SECRET: `HOST`**
+### **SECRET: `HOST`**
 ```
 Name: HOST
-Value: recibolegal.com.br
+Value: recibolegal.com.br  ✅ CONFIGURADO
 ```
 
 #### **SECRET: `USERNAME`**  
 ```
 Name: USERNAME
-Value: root
+Value: root  ✅ CONFIGURADO
 ```
 
 #### **SECRET: `SSH_KEY`**
 ```
 Name: SSH_KEY
-Value: [CHAVE SSH PRIVADA COMPLETA]
+Value: [CHAVE SSH PRIVADA COMPLETA]  ✅ CONFIGURADO
 ```
 
 ---
