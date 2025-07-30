@@ -384,6 +384,13 @@ router.post('/webhook', async (req, res) => {
     if (buttonId) console.log(`🔘 Button pressed: ${buttonId}`);
     if (processedAction) console.log(`⚡ Action: ${processedAction}`);
 
+    // ⚠️ CRITICAL CHECK: Ignore messages from bot's own number
+    if (userPhone === WHATSAPP_NUMBER) {
+      console.log(`🚫 IGNORED: Message from bot's own number (${WHATSAPP_NUMBER})`);
+      console.log(`❌ This prevents infinite loops and Twilio error 63031`);
+      return res.status(200).send('OK'); // Return success but don't process
+    }
+
     // Ensure user exists in database (create if first time)
     const normalizedPhone = userService.cleanPhoneNumber(userPhone);
     let user = await userService.getUserByPhone(normalizedPhone);
@@ -987,6 +994,13 @@ async function sendWhatsAppMessage(to, message) {
     }
     
     console.log(`📤 Attempting to send message to ${formattedTo}: "${message}"`);
+    
+    // ⚠️ CRITICAL CHECK: Prevent bot from messaging itself
+    if (formattedTo === WHATSAPP_NUMBER) {
+      console.log(`🚫 BLOCKED: Attempted to send message to bot's own number (${WHATSAPP_NUMBER})`);
+      console.log(`❌ This would cause Twilio error 63031: Message cannot have the same To and From`);
+      return; // Exit early without sending message
+    }
     
     // Check if simulation mode is enabled
     if (process.env.SIMULATION_MODE === 'true') {
