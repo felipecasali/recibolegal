@@ -201,8 +201,9 @@ router.post('/generate', async (req, res) => {
     }
 
     // Check user limits if userPhone is provided
+    let cleanPhone = null;
     if (userPhone) {
-      const cleanPhone = userService.cleanPhoneNumber(userPhone);
+      cleanPhone = userService.cleanPhoneNumber(userPhone);
       
       // Get or create user
       let user = await userService.getUserByPhone(cleanPhone);
@@ -229,7 +230,7 @@ router.post('/generate', async (req, res) => {
     let providerName = null;
     let providerDocument = null;
     
-    if (userPhone) {
+    if (userPhone && cleanPhone) {
       const userData = await userService.getUserByPhone(cleanPhone);
       if (userData && userData.fullName && userData.cpfCnpj) {
         providerName = userData.fullName;

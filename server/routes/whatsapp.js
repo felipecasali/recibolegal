@@ -308,6 +308,9 @@ function processButtonResponse(message, buttonId = null) {
   // If we have a button ID, use it directly
   if (buttonId) return buttonId;
   
+  // Check if message exists and is a string
+  if (!message || typeof message !== 'string') return null;
+  
   // Otherwise, map common text responses to button IDs
   const textMappings = {
     // Profile menu
@@ -369,9 +372,9 @@ function processButtonResponse(message, buttonId = null) {
 // Webhook endpoint for WhatsApp messages
 router.post('/webhook', async (req, res) => {
   try {
-    const { Body, From, To, ButtonPayload } = req.body;
+    const { Body, From, To, ButtonPayload } = req.body || {};
     const userPhone = From;
-    const message = Body?.trim().toLowerCase();
+    const message = Body ? Body.trim().toLowerCase() : '';
     
     // Check if this is a button response
     const buttonId = ButtonPayload || null;

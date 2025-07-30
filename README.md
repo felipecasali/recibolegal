@@ -1,14 +1,53 @@
-# ReciboLegal - React + Vite
+# ReciboLegal - WhatsApp Receipt Generator
 
-**✅ Testando deployment com GitHub Secrets configurados**
+ReciboLegal é uma plataforma que permite a freelancers e pequenos negócios gerar recibos, contratos e comprovantes de serviços via WhatsApp de forma simples e automatizada.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🚨 Problemas SSL Resolvidos
 
-Currently, two official plugins are available:
+Se as mensagens WhatsApp não estão sendo respondidas em produção, provavelmente é um problema de SSL. **Execute no servidor:**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+./check-ssl.sh    # Verificar status
+./fix-ssl.sh      # Corrigir problemas
+```
 
-## Expanding the ESLint configuration
+📖 **[Guia Completo de Correção SSL](./CORRIGIR-SSL.md)**
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🚀 Quick Start
+
+### Desenvolvimento Local
+```bash
+npm install
+npm run dev
+```
+
+### Produção
+```bash
+./deploy-prod.sh  # Deploy completo com SSL
+```
+
+## 📋 Scripts Disponíveis
+
+- `./check-ssl.sh` - Verificar status do certificado SSL
+- `./fix-ssl.sh` - Corrigir problemas de SSL 
+- `./deploy-prod.sh` - Deploy completo para produção
+
+## 🔧 Tecnologias
+
+- **Frontend:** React + Vite
+- **Backend:** Node.js + Express
+- **WhatsApp:** Twilio API
+- **Deployment:** Docker + Traefik + Let's Encrypt
+- **SSL:** Certificados automáticos Let's Encrypt
+
+## ⚠️ Troubleshooting
+
+### Mensagens WhatsApp não funcionam?
+1. Execute `./check-ssl.sh` no servidor
+2. Se SSL estiver com problema, execute `./fix-ssl.sh`
+3. Aguarde 2-3 minutos para propagação
+4. Teste novamente
+
+### Outros problemas?
+- Verificar logs: `docker-compose -f docker-compose.prod.yml logs`
+- Consultar: `SSL-TROUBLESHOOTING.md`
