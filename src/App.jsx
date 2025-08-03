@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ReceiptForm from './components/ReceiptForm.jsx'
+import FAQSection from './components/FAQSection.jsx'
 import WhatsAppIntegration from './components/WhatsAppIntegration.jsx'
 import UserDashboard from './components/UserDashboard.jsx'
 import SubscriptionPlans from './components/SubscriptionPlans.jsx'
@@ -305,6 +306,9 @@ function App() {
           </div>
         </section>
 
+
+      {/* FAQ SEO Section */}
+      <FAQSection />
       </main>
 
       <footer className="footer">
