@@ -90,7 +90,31 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   const digitalSigY = signatureY + 25;
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
-  doc.text('Documento assinado digitalmente pelo ReciboLegal', 20, digitalSigY);
+  // Adiciona logo
+  try {
+    const logoPath = path.join(__dirname, '../assets/recibolegal-logo.PNG');
+    const imgData = fs.readFileSync(logoPath);
+    const base64Logo = Buffer.from(imgData).toString('base64');
+    doc.addImage('data:image/png;base64,' + base64Logo, 'PNG', 85, 10, 40, 40);
+  } catch (e) {
+    doc.setFont('helvetica');
+    doc.setFontSize(20);
+    doc.setTextColor(102, 126, 234);
+    doc.text('RECIBO LEGAL', 105, 30, { align: 'center' });
+  }
+  // Header
+  doc.setFont('helvetica');
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text('Recibo de Prestação de Serviços', 105, 55, { align: 'center' });
+  // Line separator
+  doc.setLineWidth(0.5);
+  doc.line(20, 60, 190, 60);
+  // Receipt number, hash e data
+  doc.setFontSize(10);
+  doc.text(`Recibo Nº: ${receiptId}`, 20, 68);
+  doc.text(`Hash da assinatura: ${documentHash}`, 20, 76);
+  doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 130, 68);
   doc.text(`Hash de verificação: ${documentHash}`, 20, digitalSigY + 8);
   doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, digitalSigY + 16);
   
