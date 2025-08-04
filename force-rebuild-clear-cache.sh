@@ -48,7 +48,7 @@ echo "🧹 Step 3: Limpeza Completa de Cache"
 echo "=================================="
 
 echo "Removendo imagens antigas..."
-docker-compose -f docker-compose.prod.yml down --rmi all --volumes --remove-orphans || echo "Limpeza básica concluída"
+docker-compose -f docker-compose.prod.yml down --rmi all --remove-orphans || echo "Limpeza básica concluída"
 
 echo ""
 echo "Limpeza do sistema Docker..."
