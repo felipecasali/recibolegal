@@ -12,17 +12,11 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   const doc = new jsPDF();
   // Set font
   doc.setFont('helvetica');
-  // Header
-  doc.setFontSize(20);
-  doc.setTextColor(102, 126, 234); // Purple color
-  doc.text('RECIBO LEGAL', 105, 30, { align: 'center' });
-  doc.setFontSize(12);
-  doc.setTextColor(0, 0, 0);
   
   // Prestador (Service Provider) information - NEW
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO PRESTADOR', 20, 80);
+  doc.text('DADOS DO PRESTADOR', 20, 120);
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
@@ -42,7 +36,7 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   // Service information
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO SERVIÇO', 20, 100);
+  doc.text('DADOS DO SERVIÇO', 20, 170);
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
@@ -103,7 +97,6 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   // Receipt number, hash e data
   doc.setFontSize(10);
   doc.text(`Recibo Nº: ${receiptId}`, 20, 68);
-  doc.text(`Hash da assinatura: ${documentHash}`, 20, 76);
   doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 130, 68);
   doc.text(`Hash de verificação: ${documentHash}`, 20, digitalSigY + 8);
   doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, digitalSigY + 16);
