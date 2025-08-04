@@ -18,15 +18,6 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   doc.text('RECIBO LEGAL', 105, 30, { align: 'center' });
   doc.setFontSize(12);
   doc.setTextColor(0, 0, 0);
-  doc.text('Recibo de Prestação de Serviços', 105, 40, { align: 'center' });
-  // Line separator
-  doc.setLineWidth(0.5);
-  doc.line(20, 50, 190, 50);
-  // Receipt number and date
-  doc.setFontSize(10);
-  doc.text(`Recibo Nº: ${receiptId}`, 20, 60);
-  doc.text(`Hash da assinatura: ${documentHash}`, 20, 68);
-  doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 130, 60);
   
   // Prestador (Service Provider) information - NEW
   doc.setFontSize(14);
@@ -41,7 +32,7 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   // Client information
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO CLIENTE', 20, 125);
+  doc.text('DADOS DO CLIENTE', 20, 100);
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
@@ -51,7 +42,7 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   // Service information
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO SERVIÇO', 20, 170);
+  doc.text('DADOS DO SERVIÇO', 20, 100);
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
@@ -77,12 +68,12 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   doc.text(`Valor por extenso: ${amountInWords}`, 20, amountY + 15);
   
   // Declaration
-  const declarationY = amountY + 35;
+  const declarationY = amountY + 15;
   doc.setFontSize(11);
   doc.text('Declaro que recebi a quantia acima referente aos serviços prestados.', 20, declarationY);
   
   // Signature area
-  const signatureY = declarationY + 30;
+  const signatureY = declarationY + 10;
   doc.line(20, signatureY, 100, signatureY);
   doc.text('Assinatura do Prestador', 20, signatureY + 10);
   
@@ -106,7 +97,6 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   doc.setFont('helvetica');
   doc.setFontSize(12);
   doc.setTextColor(0, 0, 0);
-  doc.text('Recibo de Prestação de Serviços', 105, 55, { align: 'center' });
   // Line separator
   doc.setLineWidth(0.5);
   doc.line(20, 60, 190, 60);
@@ -122,7 +112,7 @@ function generateReceiptPDF(data, receiptId, documentHash) {
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
   doc.text('Este documento foi gerado automaticamente pelo ReciboLegal', 105, 280, { align: 'center' });
-  doc.text('www.recibolegal.com.br', 105, 285, { align: 'center' });
+  doc.text('www.recibolegal.com.br | WhatsApp +551150281981', 105, 285, { align: 'center' });
   
   return doc;
 }
