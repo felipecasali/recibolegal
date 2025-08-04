@@ -136,7 +136,7 @@ Como é seu primeiro acesso, vou precisar de algumas informações básicas para
 
 Por favor, me diga seu *nome completo*:`,
 
-  userDocument: `Perfeito! Agora preciso do seu *CPF ou CNPJ*:
+  userDocument: `Olá! Precisamos completar seu cadastro, e por isso preciso do seu *CPF ou CNPJ*:
 
 💡 Exemplo: 123.456.789-00 ou 12.345.678/0001-90
 
