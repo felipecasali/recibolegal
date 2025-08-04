@@ -8,29 +8,24 @@ const analyticsService = require('../services/analyticsService');
 const router = express.Router();
 
 // Receipt template generator
-function generateReceiptPDF(data) {
+function generateReceiptPDF(data, receiptId, documentHash) {
   const doc = new jsPDF();
-  
   // Set font
   doc.setFont('helvetica');
-  
   // Header
   doc.setFontSize(20);
   doc.setTextColor(102, 126, 234); // Purple color
   doc.text('RECIBO LEGAL', 105, 30, { align: 'center' });
-  
   doc.setFontSize(12);
   doc.setTextColor(0, 0, 0);
   doc.text('Recibo de Prestação de Serviços', 105, 40, { align: 'center' });
-  
   // Line separator
   doc.setLineWidth(0.5);
   doc.line(20, 50, 190, 50);
-  
   // Receipt number and date
-  const receiptId = generateReceiptId();
   doc.setFontSize(10);
   doc.text(`Recibo Nº: ${receiptId}`, 20, 60);
+  doc.text(`Hash da assinatura: ${documentHash}`, 20, 68);
   doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 130, 60);
   
   // Prestador (Service Provider) information - NEW
@@ -96,7 +91,7 @@ function generateReceiptPDF(data) {
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
   doc.text('Documento assinado digitalmente pelo ReciboLegal', 20, digitalSigY);
-  doc.text(`Hash de verificação: ${generateDocumentHash(data)}`, 20, digitalSigY + 8);
+  doc.text(`Hash de verificação: ${documentHash}`, 20, digitalSigY + 8);
   doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, digitalSigY + 16);
   
   // Footer
@@ -239,6 +234,9 @@ router.post('/generate', async (req, res) => {
     }
     
     // Generate PDF
+    // Gerar receiptId e hash antes do PDF
+    const receiptId = generateReceiptId();
+    const documentHash = generateDocumentHash({ clientName, clientDocument, serviceName, amount, date });
     const doc = generateReceiptPDF({
       clientName,
       clientDocument,
@@ -248,19 +246,15 @@ router.post('/generate', async (req, res) => {
       date,
       providerName,
       providerDocument
-    });
-    
+    }, receiptId, documentHash);
     // Create receipts directory if it doesn't exist
     const receiptsDir = path.join(__dirname, '../receipts');
     if (!fs.existsSync(receiptsDir)) {
       fs.mkdirSync(receiptsDir, { recursive: true });
     }
-    
     // Save PDF
-    const receiptId = generateReceiptId();
     const filename = `receipt_${receiptId}.pdf`;
     const filepath = path.join(receiptsDir, filename);
-    
     const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
     fs.writeFileSync(filepath, pdfBuffer);
     
