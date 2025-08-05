@@ -10,72 +10,7 @@ const router = express.Router();
 // Receipt template generator
 function generateReceiptPDF(data, receiptId, documentHash) {
   const doc = new jsPDF();
-  // Set font
-  doc.setFont('helvetica');
-  
-  // Prestador (Service Provider) information - NEW
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO PRESTADOR', 20, 120);
-  
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
-  doc.text(`Nome: ${data.providerName || 'Não informado'}`, 20, 95);
-  doc.text(`CPF/CNPJ: ${data.providerDocument || 'Não informado'}`, 20, 105);
-  
-  // Client information
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO CLIENTE', 20, 100);
-  
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
-  doc.text(`Nome: ${data.clientName}`, 20, 140);
-  doc.text(`CPF/CNPJ: ${data.clientDocument}`, 20, 150);
-  
-  // Service information
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('DADOS DO SERVIÇO', 20, 170);
-  
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11);
-  doc.text(`Serviço: ${data.serviceName}`, 20, 185);
-  
-  if (data.serviceDescription && data.serviceDescription.trim() !== '') {
-    const descriptionLines = doc.splitTextToSize(`Descrição: ${data.serviceDescription}`, 170);
-    doc.text(descriptionLines, 20, 195);
-  }
-  
-  doc.text(`Data do serviço: ${data.date}`, 20, data.serviceDescription ? 215 : 195);
-  
-  // Amount
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  const amountY = data.serviceDescription ? 235 : 215;
-  doc.text(`VALOR: R$ ${parseFloat(data.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, amountY);
-  
-  // Amount in words
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  const amountInWords = numberToWords(parseFloat(data.amount));
-  doc.text(`Valor por extenso: ${amountInWords}`, 20, amountY + 15);
-  
-  // Declaration
-  const declarationY = amountY + 15;
-  doc.setFontSize(11);
-  doc.text('Declaro que recebi a quantia acima referente aos serviços prestados.', 20, declarationY);
-  
-  // Signature area
-  const signatureY = declarationY + 10;
-  doc.line(20, signatureY, 100, signatureY);
-  doc.text('Assinatura do Prestador', 20, signatureY + 10);
-  
-  // Digital signature info
-  const digitalSigY = signatureY + 25;
-  doc.setFontSize(9);
-  doc.setTextColor(100, 100, 100);
-  // Adiciona logo
+  // LOGO
   try {
     const logoPath = path.join(__dirname, '../assets/recibolegal-logo.PNG');
     const imgData = fs.readFileSync(logoPath);
@@ -87,26 +22,110 @@ function generateReceiptPDF(data, receiptId, documentHash) {
     doc.setTextColor(102, 126, 234);
     doc.text('RECIBO LEGAL', 105, 30, { align: 'center' });
   }
-  // Header
-  doc.setFont('helvetica');
-  doc.setFontSize(12);
-  doc.setTextColor(0, 0, 0);
-  // Line separator
-  doc.setLineWidth(0.5);
-  doc.line(20, 60, 190, 60);
-  // Receipt number, hash e data
+
+  // TÍTULO E IDENTIFICAÇÃO
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(40, 40, 40);
+  doc.text('RECIBO DE PRESTAÇÃO DE SERVIÇOS', 105, 60, { align: 'center' });
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Recibo Nº: ${receiptId}`, 20, 70);
+  doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 150, 70);
+  doc.text(`Hash da assinatura: ${documentHash}`, 20, 78);
+
+  // LINHA
+  doc.setDrawColor(102, 126, 234);
+  doc.setLineWidth(1);
+  doc.line(20, 83, 190, 83);
+
+  // DADOS DO PRESTADOR
+  let y = 92;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(60, 60, 60);
+  doc.text('Prestador', 20, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(40, 40, 40);
+  doc.text(`Nome: ${data.providerName || 'Não informado'}`, 20, y + 8);
+  doc.text(`CPF/CNPJ: ${data.providerDocument || 'Não informado'}`, 20, y + 16);
+
+  // DADOS DO CLIENTE
+  y += 30;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(60, 60, 60);
+  doc.text('Cliente', 20, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(40, 40, 40);
+  doc.text(`Nome: ${data.clientName}`, 20, y + 8);
+  doc.text(`CPF/CNPJ: ${data.clientDocument}`, 20, y + 16);
+
+  // DADOS DO SERVIÇO
+  y += 30;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(60, 60, 60);
+  doc.text('Serviço', 20, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(40, 40, 40);
+  doc.text(`Título: ${data.serviceName}`, 20, y + 8);
+  if (data.serviceDescription && data.serviceDescription.trim() !== '') {
+    const descriptionLines = doc.splitTextToSize(`Descrição: ${data.serviceDescription}`, 170);
+    doc.text(descriptionLines, 20, y + 16);
+    y += 10 + descriptionLines.length * 6;
+  } else {
+    y += 16;
+  }
+  doc.text(`Data do serviço: ${data.date}`, 20, y + 8);
+  y += 18;
+
+  // VALOR
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(30, 30, 30);
+  const valor = `VALOR: R$ ${parseFloat(data.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  doc.text(valor, 20, y);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(40, 40, 40);
+  const amountInWords = numberToWords(parseFloat(data.amount));
+  doc.text(`Valor por extenso: ${amountInWords}`, 80, y);
+  y += 15;
+
+  // DECLARAÇÃO
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(40, 40, 40);
+  doc.text('Declaro que recebi a quantia acima referente aos serviços prestados.', 20, y);
+  y += 20;
+
+  // ASSINATURA
+  doc.setDrawColor(120, 120, 120);
+  doc.line(20, y, 100, y);
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
-  doc.text(`Recibo Nº: ${receiptId}`, 20, 68);
-  doc.text(`Data de emissão: ${new Date().toLocaleDateString('pt-BR')}`, 130, 68);
-  doc.text(`Hash de verificação: ${documentHash}`, 20, digitalSigY + 8);
-  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, digitalSigY + 16);
-  
-  // Footer
+  doc.text('Assinatura do Prestador', 20, y + 7);
+  y += 25;
+
+  // DIGITAL SIGNATURE INFO
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.text('Documento assinado digitalmente pelo ReciboLegal', 20, y);
+  doc.text(`Hash de verificação: ${documentHash}`, 20, y + 7);
+  doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, y + 14);
+  y += 22;
+
+  // FOOTER
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  doc.text('Este documento foi gerado automaticamente pelo ReciboLegal', 105, 280, { align: 'center' });
-  doc.text('www.recibolegal.com.br | WhatsApp +551150281981', 105, 285, { align: 'center' });
-  
+  doc.text('Este documento foi gerado automaticamente pelo ReciboLegal', 105, 285, { align: 'center' });
+  doc.text('www.recibolegal.com.br | WhatsApp +551150281981', 105, 290, { align: 'center' });
+
   return doc;
 }
 

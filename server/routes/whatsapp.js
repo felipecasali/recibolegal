@@ -144,7 +144,7 @@ Por favor, me diga seu *nome completo*:`,
 
   profileComplete: (name) => `✅ *Perfil configurado com sucesso!*
 
-Olá, ${name}! Agora você pode criar recibos profissionais.
+Pronto! Agora você pode criar recibos profissionais.
 
 Para começar seu primeiro recibo, me diga o *nome completo do seu cliente*:`,
 
