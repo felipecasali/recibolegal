@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useSpring, animated, config } from '@react-spring/web';
 import { useInView } from 'react-intersection-observer';
 import CountUp from 'react-countup';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -11,13 +10,17 @@ const UserDashboard = ({ userPhone }) => {
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [scrollY, setScrollY] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const [isVisible, setIsVisible] = useState({});
+  
+  const observeSection = (sectionId) => (node) => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(prev => ({ ...prev, [sectionId]: entry.isIntersecting }));
+      },
+      { threshold: 0.1 }
+    );
+    if (node) observer.observe(node);
+  };
 
   const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://recibolegal.com.br');
 
@@ -74,56 +77,27 @@ const UserDashboard = ({ userPhone }) => {
     }
   };
 
-  // Animation hooks
+  // Animation hooks for sections
   const [containerRef, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1
   });
 
-  const fadeInSpring = useSpring({
-    opacity: inView ? 1 : 0,
-    transform: inView ? 'translateY(0px)' : 'translateY(40px)',
-    config: config.gentle
-  });
-
-  const scrollSpring = useSpring({
-    transform: `translateY(${scrollY * 0.1}px)`,
-    config: config.gentle
-  });
-
-  const cardSpring = useSpring({
-    opacity: inView ? 1 : 0,
-    transform: inView ? 'scale(1)' : 'scale(0.9)',
-    config: config.gentle
-  });
-
   if (loading) {
-    const loadingSpring = useSpring({
-      from: { opacity: 0, scale: 0.9 },
-      to: { opacity: 1, scale: 1 },
-      config: config.gentle
-    });
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <animated.div style={loadingSpring} className="text-center">
+        <div className="text-center animate-fadeIn">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent mx-auto"></div>
           <p className="mt-6 text-lg text-gray-600">Carregando seu dashboard...</p>
-        </animated.div>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    const errorSpring = useSpring({
-      from: { opacity: 0, transform: 'translateY(-20px)' },
-      to: { opacity: 1, transform: 'translateY(0px)' },
-      config: config.gentle
-    });
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
-        <animated.div style={errorSpring} className="text-center bg-white p-8 rounded-2xl shadow-lg">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-lg animate-slideUp">
           <FiActivity className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 text-lg mb-4">{error}</p>
           <button 
@@ -145,10 +119,9 @@ const UserDashboard = ({ userPhone }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
-      <animated.div 
+      <div 
         ref={containerRef}
-        style={fadeInSpring}
-        className="max-w-6xl mx-auto p-6"
+        className={`max-w-6xl mx-auto p-6 ${inView ? 'animate-fadeIn' : 'opacity-0'}`}
       >
         {/* Header */}
         <animated.div 
@@ -469,7 +442,7 @@ const UserDashboard = ({ userPhone }) => {
             ))}
           </div>
         </animated.div>
-      </animated.div>
+      </div>
     </div>
   );
 };
