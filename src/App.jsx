@@ -6,6 +6,7 @@ import UserDashboard from './components/UserDashboard.jsx'
 import SubscriptionPlans from './components/SubscriptionPlans.jsx'
 import PlansCheckout from './components/PlansCheckout.jsx'
 import './App.css'
+import './styles/animations.css'
 
 function App() {
   const [showReceiptForm, setShowReceiptForm] = useState(false)

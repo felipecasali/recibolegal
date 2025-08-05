@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { useSpring, animated, config } from '@react-spring/web';
-import { useInView } from 'react-intersection-observer';
 import CountUp from 'react-countup';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { FiArrowUp, FiUser, FiFileText, FiCreditCard, FiActivity } from 'react-icons/fi';
@@ -74,65 +72,59 @@ const UserDashboard = ({ userPhone }) => {
     }
   };
 
-  // Animation hooks
-  const [containerRef, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1
-  });
+  // Animation with Intersection Observer
+  const [isVisible, setIsVisible] = useState({});
+  const observerRefs = useRef({});
 
-  const fadeInSpring = useSpring({
-    opacity: inView ? 1 : 0,
-    transform: inView ? 'translateY(0px)' : 'translateY(40px)',
-    config: config.gentle
-  });
+  useEffect(() => {
+    const observerCallback = (entries) => {
+      entries.forEach(entry => {
+        setIsVisible(prev => ({
+          ...prev,
+          [entry.target.dataset.section]: entry.isIntersecting
+        }));
+      });
+    };
 
-  const scrollSpring = useSpring({
-    transform: `translateY(${scrollY * 0.1}px)`,
-    config: config.gentle
-  });
-
-  const cardSpring = useSpring({
-    opacity: inView ? 1 : 0,
-    transform: inView ? 'scale(1)' : 'scale(0.9)',
-    config: config.gentle
-  });
-
-  if (loading) {
-    const loadingSpring = useSpring({
-      from: { opacity: 0, scale: 0.9 },
-      to: { opacity: 1, scale: 1 },
-      config: config.gentle
+    const observer = new IntersectionObserver(observerCallback, {
+      threshold: 0.1
     });
 
+    return () => observer.disconnect();
+  }, []);
+
+  const observeSection = (section) => (element) => {
+    if (element && !observerRefs.current[section]) {
+      observerRefs.current[section] = element;
+      element.dataset.section = section;
+      observer.observe(element);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <animated.div style={loadingSpring} className="text-center">
+        <div className="text-center animate-fadeIn">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent mx-auto"></div>
           <p className="mt-6 text-lg text-gray-600">Carregando seu dashboard...</p>
-        </animated.div>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    const errorSpring = useSpring({
-      from: { opacity: 0, transform: 'translateY(-20px)' },
-      to: { opacity: 1, transform: 'translateY(0px)' },
-      config: config.gentle
-    });
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
-        <animated.div style={errorSpring} className="text-center bg-white p-8 rounded-2xl shadow-lg">
+        <div className="text-center bg-white p-8 rounded-2xl shadow-lg animate-slideDown">
           <FiActivity className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 text-lg mb-4">{error}</p>
           <button 
             onClick={fetchUserData}
-            className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transform hover:scale-105 transition-all"
+            className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transform hover:scale-105 transition-all duration-300"
           >
             Tentar Novamente
           </button>
-        </animated.div>
+        </div>
       </div>
     );
   }
@@ -145,15 +137,16 @@ const UserDashboard = ({ userPhone }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
-      <animated.div 
-        ref={containerRef}
-        style={fadeInSpring}
-        className="max-w-6xl mx-auto p-6"
+      <div 
+        ref={observeSection('container')}
+        className={`max-w-6xl mx-auto p-6 transition-all duration-700 transform ${
+          isVisible.container ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+        }`}
       >
         {/* Header */}
-        <animated.div 
-          style={scrollSpring}
-          className="bg-white backdrop-blur-lg bg-opacity-90 rounded-2xl shadow-xl p-8 mb-8 border border-gray-100"
+        <div 
+          style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+          className="bg-white backdrop-blur-lg bg-opacity-90 rounded-2xl shadow-xl p-8 mb-8 border border-gray-100 transition-transform duration-300"
         >
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
@@ -176,6 +169,7 @@ const UserDashboard = ({ userPhone }) => {
             {
               icon: <FiCreditCard className="w-8 h-8 text-green-500 mb-4" />,
               title: "Plano Atual",
+              animationDelay: "animate-delay-100",
               content: (
                 <>
                   <p className="text-3xl font-bold bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">
@@ -232,24 +226,26 @@ const UserDashboard = ({ userPhone }) => {
               )
             }
           ].map((card, index) => (
-            <animated.div
+            <div
               key={index}
-              style={cardSpring}
-              className="bg-white rounded-2xl shadow-lg p-6 transform hover:scale-105 transition-all border border-gray-100"
+              ref={observeSection(`card-${index}`)}
+              className={`bg-white rounded-2xl shadow-lg p-6 transform hover:scale-105 transition-all border border-gray-100
+                ${isVisible[`card-${index}`] ? 'animate-scaleIn' : 'opacity-0'} ${card.animationDelay}`}
             >
               {card.icon}
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {card.title}
               </h3>
               {card.content}
-            </animated.div>
+            </div>
           ))}
         </div>
 
         {/* Usage Chart */}
-        <animated.div 
-          style={fadeInSpring}
-          className="bg-white rounded-2xl shadow-lg p-6 mb-12 border border-gray-100"
+        <div 
+          ref={observeSection('chart')}
+          className={`bg-white rounded-2xl shadow-lg p-6 mb-12 border border-gray-100
+            ${isVisible.chart ? 'animate-slideUp animate-delay-200' : 'opacity-0'}`}
         >
           <h3 className="text-xl font-semibold text-gray-900 mb-6">
             Utilização ao Longo do Tempo
@@ -264,13 +260,13 @@ const UserDashboard = ({ userPhone }) => {
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </animated.div>
+        </div>
 
         {/* Subscription Management */}
-        <animated.div 
-          ref={hoverRef}
-          style={fadeInSpring}
-          className="bg-white rounded-2xl shadow-lg p-8 mb-12 border border-gray-100"
+        <div 
+          ref={observeSection('subscription')}
+          className={`bg-white rounded-2xl shadow-lg p-8 mb-12 border border-gray-100
+            ${isVisible.subscription ? 'animate-slideUp animate-delay-400' : 'opacity-0'}`}
         >
           <h3 className="text-xl font-semibold text-gray-900 mb-6">
             Gerenciar Assinatura
@@ -355,26 +351,23 @@ const UserDashboard = ({ userPhone }) => {
               <p className="text-gray-600 mb-6">
                 Você tem uma assinatura ativa. Gerencie seu plano ou forma de pagamento.
               </p>
-              <animated.button 
+              <button 
                 onClick={handleManageSubscription}
-                style={useSpring({
-                  scale: hoverInView ? 1 : 0.95,
-                  config: config.gentle
-                })}
                 className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 
                          text-white rounded-lg transform hover:scale-105 transition-all"
               >
                 Gerenciar Assinatura
-              </animated.button>
+              </button>
             </div>
           )}
-        </animated.div>
+        </div>
 
         {/* Usage Progress */}
         {stats?.monthlyLimit > 0 && (
-          <animated.div 
-            style={fadeInSpring}
-            className="bg-white rounded-2xl shadow-lg p-8 mb-12 border border-gray-100"
+          <div 
+            ref={observeSection('progress')}
+            className={`bg-white rounded-2xl shadow-lg p-8 mb-12 border border-gray-100
+              ${isVisible.progress ? 'animate-slideUp animate-delay-600' : 'opacity-0'}`}
           >
             <h3 className="text-xl font-semibold text-gray-900 mb-6">
               Progresso do Mês
@@ -409,27 +402,23 @@ const UserDashboard = ({ userPhone }) => {
             )}
             
             {stats.remainingReceipts === 0 && (
-              <animated.div 
-                style={useSpring({
-                  opacity: 1,
-                  transform: 'translateX(0)',
-                  from: { opacity: 0, transform: 'translateX(-20px)' },
-                  config: config.gentle
-                })}
-                className="mt-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg"
+              <div 
+                className="mt-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg
+                  animate-slideRight animate-once"
               >
                 <p className="text-red-800 flex items-center">
                   <FiActivity className="w-5 h-5 mr-2" />
                   Limite mensal atingido. Faça upgrade para continuar gerando recibos.
                 </p>
-              </animated.div>
+              </div>
             )}
-          </animated.div>
+          </div>
         )}
 
         {/* Quick Actions */}
-        <animated.div 
-          style={fadeInSpring}
+        <div 
+          ref={observeSection('actions')}
+          className={`${isVisible.actions ? 'animate-slideUp animate-delay-800' : 'opacity-0'}`}
           className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100"
         >
           <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
@@ -451,25 +440,20 @@ const UserDashboard = ({ userPhone }) => {
                 gradient: 'from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
               }
             ].map((action, index) => (
-              <animated.button
+              <button
                 key={index}
-                style={useSpring({
-                  scale: hoverInView ? 1 : 0.95,
-                  delay: index * 100,
-                  config: config.gentle
-                })}
                 onClick={action.onClick}
                 className={`group relative overflow-hidden px-8 py-4 bg-gradient-to-r ${action.gradient}
                          text-white rounded-xl flex items-center justify-center
-                         transform transition-all hover:scale-105`}
+                         transform transition-all hover:scale-105 animate-pulse`}
               >
                 <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
                 <span className="text-lg">{action.icon} {action.text}</span>
-              </animated.button>
+              </button>
             ))}
           </div>
-        </animated.div>
-      </animated.div>
+        </div>
+      </div>
     </div>
   );
 };
