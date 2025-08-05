@@ -1,20 +1,20 @@
 # Multi-stage build for production
-FROM node:20-alpine AS frontend-build
+FROM node:18-alpine AS frontend-build
 
 # Build frontend
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN rm -rf node_modules package-lock.json && npm install && npm prune
 COPY . .
 RUN npm run build
 
 # Backend production stage
-FROM node:20-alpine AS production
+FROM node:18-alpine AS production
 
 # Install production dependencies
 WORKDIR /app
 COPY server/package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN rm -rf node_modules package-lock.json && npm install --omit=dev && npm prune --production
 
 # Copy server code
 COPY server/ ./
