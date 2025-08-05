@@ -5,7 +5,8 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'rec
 import { FiArrowUp, FiUser, FiFileText, FiCreditCard, FiActivity } from 'react-icons/fi';
 
 const UserDashboard = ({ userPhone }) => {
-  const [userStats, setUserStats] = useState(null);
+  const [userStats, setUserStats]               <div 
+                className="mt-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg animate-slideLeft"te(null);
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -161,7 +162,7 @@ const UserDashboard = ({ userPhone }) => {
               </p>
             </div>
           </div>
-        </animated.div>
+        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
@@ -309,12 +310,11 @@ const UserDashboard = ({ userPhone }) => {
                   });
 
                   return (
-                    <animated.div
+                    <div
                       key={plan.planId}
-                      style={planSpring}
                       className={`relative bg-white rounded-2xl p-6 transform transition-all duration-300
                         ${plan.popular 
-                          ? 'border-2 border-green-500 shadow-xl' 
+                          ? 'border-2 border-green-500 shadow-xl animate-scale' 
                           : 'border border-gray-200 shadow-lg hover:shadow-xl'}`}
                     >
                       {plan.popular && (
@@ -341,7 +341,7 @@ const UserDashboard = ({ userPhone }) => {
                       >
                         Assinar
                       </button>
-                    </animated.div>
+                    </div>
                   );
                 })}
               </div>
@@ -373,11 +373,11 @@ const UserDashboard = ({ userPhone }) => {
               Progresso do Mês
             </h3>
             <div className="w-full bg-gray-100 rounded-full h-4 mb-4">
-              <animated.div 
+              <div 
                 style={{
                   width: `${Math.min((stats.currentMonthUsage / stats.monthlyLimit) * 100, 100)}%`,
                 }}
-                className="bg-gradient-to-r from-green-500 to-blue-500 h-4 rounded-full"
+                className="bg-gradient-to-r from-green-500 to-blue-500 h-4 rounded-full transition-all duration-1000"
               />
             </div>
             <p className="text-gray-600">
@@ -385,20 +385,14 @@ const UserDashboard = ({ userPhone }) => {
             </p>
             
             {stats.remainingReceipts <= 5 && stats.remainingReceipts > 0 && (
-              <animated.div 
-                style={useSpring({
-                  opacity: 1,
-                  transform: 'translateX(0)',
-                  from: { opacity: 0, transform: 'translateX(-20px)' },
-                  config: config.gentle
-                })}
-                className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg"
+              <div 
+                className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg animate-slideLeft"
               >
                 <p className="text-yellow-800 flex items-center">
                   <FiActivity className="w-5 h-5 mr-2" />
                   Restam apenas {stats.remainingReceipts} recibos este mês.
                 </p>
-              </animated.div>
+              </div>
             )}
             
             {stats.remainingReceipts === 0 && (
@@ -418,8 +412,9 @@ const UserDashboard = ({ userPhone }) => {
         {/* Quick Actions */}
         <div 
           ref={observeSection('actions')}
-          className={`${isVisible.actions ? 'animate-slideUp animate-delay-800' : 'opacity-0'}`}
-          className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100"
+          className={`bg-white rounded-2xl shadow-lg p-8 border border-gray-100 ${
+            isVisible.actions ? 'animate-slideUp animate-delay-800' : 'opacity-0'
+          }`}
         >
           <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
             <FiFileText className="w-6 h-6 mr-2 text-purple-500" />
