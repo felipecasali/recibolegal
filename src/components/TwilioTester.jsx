@@ -23,7 +23,8 @@ const TwilioTester = () => {
     setResult('')
 
     try {
-      const response = await fetch('http://localhost:3001/api/whatsapp/test-credentials', {
+      const apiUrl = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://recibolegal.com.br');
+      const response = await fetch(`${apiUrl}/api/whatsapp/test-credentials`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
