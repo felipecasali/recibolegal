@@ -130,11 +130,15 @@ const CONVERSATION_STATES = {
 // Bot messages
 const BOT_MESSAGES = {
   // First-time user setup
-  firstTimeSetup: `🎉 Olá! Bem-vindo ao *ReciboLegal*!
+  firstTimeSetup: `🎉 Olá! Que bom ter você aqui no *ReciboLegal*!
 
-Para começar a usar o serviço, preciso de algumas informações básicas para personalizar seus recibos.
+Sou seu assistente virtual e vou te ajudar a criar recibos profissionais de forma rápida e segura. Para começar, preciso conhecer você melhor, assim seus recibos já sairão com seus dados corretos.
 
-📝 *Primeiro passo:* Por favor, me diga seu *nome completo* (como aparecerá nos recibos):`,
+� São apenas duas informações rápidas:
+• Seu nome completo
+• Seu CPF ou CNPJ
+
+📝 Vamos começar? Por favor, me diga seu *nome completo* (exatamente como você quer que apareça nos recibos):`,
 
   userDocument: `✅ Nome registrado com sucesso!
 
@@ -435,7 +439,9 @@ router.post('/webhook', async (req, res) => {
         responseMessage = BOT_MESSAGES.firstTimeSetup;
         session.state = CONVERSATION_STATES.COLLECTING_USER_NAME;
       } else if (session.state === CONVERSATION_STATES.START) {
-        responseMessage = `🎉 Olá! Para começar, preciso que você complete seu perfil.
+        responseMessage = `🎉 Oi! Que bom ter você por aqui!
+
+Para que eu possa te ajudar a criar recibos profissionais, preciso conhecer você melhor. É bem rápido, prometo! 
 
 ${BOT_MESSAGES.firstTimeSetup}`;
         session.state = CONVERSATION_STATES.COLLECTING_USER_NAME;
