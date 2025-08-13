@@ -132,15 +132,17 @@ const BOT_MESSAGES = {
   // First-time user setup
   firstTimeSetup: `🎉 Olá! Bem-vindo ao *ReciboLegal*!
 
-Como é seu primeiro acesso, vou precisar de algumas informações básicas para personalizar seus recibos.
+Para começar a usar o serviço, preciso de algumas informações básicas para personalizar seus recibos.
 
-Por favor, me diga seu *nome completo*:`,
+📝 *Primeiro passo:* Por favor, me diga seu *nome completo* (como aparecerá nos recibos):`,
 
-  userDocument: `Olá! Precisamos completar seu cadastro, e por isso preciso do seu *CPF ou CNPJ*:
+  userDocument: `✅ Nome registrado com sucesso!
+
+📝 *Segundo passo:* Agora preciso do seu *CPF ou CNPJ*:
 
 💡 Exemplo: 123.456.789-00 ou 12.345.678/0001-90
 
-ℹ️ Essas informações aparecerão nos seus recibos como prestador do serviço.`,
+ℹ️ Seu nome e CPF/CNPJ aparecerão nos recibos como prestador do serviço.`,
 
   profileComplete: (name) => `✅ *Perfil configurado com sucesso!*
 
@@ -399,9 +401,12 @@ router.post('/webhook', async (req, res) => {
       console.log(`👤 Creating new user for ${normalizedPhone}`);
       user = await userService.createUser({
         phone: normalizedPhone,
-        name: 'Usuário WhatsApp',
+        name: '',
         email: `${normalizedPhone.replace('+', '')}@whatsapp.temp`,
-        plan: 'FREE'
+        plan: 'FREE',
+        fullName: null,
+        cpfCnpj: null,
+        profileComplete: false
       });
       console.log(`✅ User created successfully: ${user.phone}`);
     }
