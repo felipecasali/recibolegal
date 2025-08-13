@@ -414,10 +414,15 @@ router.post('/webhook', async (req, res) => {
       });
       console.log(`✅ User created successfully: ${user.phone}`);
       
-      // For new users, immediately show welcome message and start profile setup
-      session.state = CONVERSATION_STATES.COLLECTING_USER_NAME;
-      responseMessage = BOT_MESSAGES.firstTimeSetup;
+      // Initialize session for new user
+      let session = {
+        state: CONVERSATION_STATES.COLLECTING_USER_NAME,
+        data: {}
+      };
       userSessions.set(userPhone, session);
+
+      // For new users, immediately show welcome message and start profile setup
+      responseMessage = BOT_MESSAGES.firstTimeSetup;
       await sendWhatsAppMessage(userPhone, responseMessage);
       return res.status(200).send('OK');
     }
