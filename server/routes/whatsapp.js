@@ -413,6 +413,13 @@ router.post('/webhook', async (req, res) => {
         profileComplete: false
       });
       console.log(`✅ User created successfully: ${user.phone}`);
+      
+      // For new users, immediately show welcome message and start profile setup
+      session.state = CONVERSATION_STATES.COLLECTING_USER_NAME;
+      responseMessage = BOT_MESSAGES.firstTimeSetup;
+      userSessions.set(userPhone, session);
+      await sendWhatsAppMessage(userPhone, responseMessage);
+      return res.status(200).send('OK');
     }
 
     // Get or create user session
@@ -427,17 +434,23 @@ router.post('/webhook', async (req, res) => {
     const isProfileComplete = await userService.isProfileComplete(normalizedPhone);
     const hasValidDocument = await userService.hasValidDocument(normalizedPhone);
     
-    // If profile is incomplete and message isn't profile related, redirect to profile setup
-    if ((!isProfileComplete || !hasValidDocument) && 
+    // Check if this is a new user or returning user without complete profile
+    const isNewUser = !user.fullName && !user.cpfCnpj;
+    const isIncompleteProfile = (!isProfileComplete || !hasValidDocument);
+    
+    // If user is new or has incomplete profile, and message isn't profile related
+    if ((isNewUser || isIncompleteProfile) && 
         session.state !== CONVERSATION_STATES.COLLECTING_USER_NAME && 
         session.state !== CONVERSATION_STATES.COLLECTING_USER_DOCUMENT &&
         !message.includes('perfil') && !message.includes('profile') &&
         !message.includes('editar') && !message.includes('edit')) {
+
+      // Reset session to start collecting user info
+      session.state = CONVERSATION_STATES.COLLECTING_USER_NAME;
       
-      if (session.state === CONVERSATION_STATES.START && 
-          (message.includes('oi') || message.includes('olá') || message.includes('começar'))) {
+      if (isNewUser) {
+        // If completely new user, show welcome message
         responseMessage = BOT_MESSAGES.firstTimeSetup;
-        session.state = CONVERSATION_STATES.COLLECTING_USER_NAME;
       } else if (session.state === CONVERSATION_STATES.START) {
         responseMessage = `🎉 Oi! Que bom ter você por aqui!
 
