@@ -364,6 +364,27 @@ class UserService {
     }
   }
 
+  // Check if user has a valid document (CPF/CNPJ)
+  async hasValidDocument(phone) {
+    try {
+      const user = await this.getUserByPhone(phone);
+      if (!user || !user.cpfCnpj) return false;
+
+      const cpfCnpj = user.cpfCnpj.replace(/[^\d]/g, ''); // Remove non-digits
+      
+      // Check if it's a CPF (11 digits) or CNPJ (14 digits)
+      if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
+        return false;
+      }
+
+      // Basic validation passed
+      return true;
+    } catch (error) {
+      console.error('Error validating document:', error);
+      return false;
+    }
+  }
+
   // Clean phone number format
   cleanPhoneNumber(phone) {
     if (!phone) return null;

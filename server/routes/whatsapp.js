@@ -419,11 +419,12 @@ router.post('/webhook', async (req, res) => {
 
     let responseMessage = '';
 
-    // Check if user profile is complete for first-time users
+    // Check if user profile fields are filled and valid
     const isProfileComplete = await userService.isProfileComplete(normalizedPhone);
+    const hasValidDocument = await userService.hasValidDocument(normalizedPhone);
     
-    // If user doesn't have complete profile and isn't in profile setup flow, redirect to profile setup
-    if (!isProfileComplete && 
+    // If profile is incomplete and message isn't profile related, redirect to profile setup
+    if ((!isProfileComplete || !hasValidDocument) && 
         session.state !== CONVERSATION_STATES.COLLECTING_USER_NAME && 
         session.state !== CONVERSATION_STATES.COLLECTING_USER_DOCUMENT &&
         !message.includes('perfil') && !message.includes('profile') &&
@@ -446,9 +447,14 @@ ${BOT_MESSAGES.firstTimeSetup}`;
       // Profile setup states for first-time users
       case CONVERSATION_STATES.COLLECTING_USER_NAME:
         if (Body && Body.trim()) {
-          session.data.userFullName = Body.trim();
-          session.state = CONVERSATION_STATES.COLLECTING_USER_DOCUMENT;
-          responseMessage = BOT_MESSAGES.userDocument;
+          const name = Body.trim();
+          if (name.split(' ').length < 2) {
+            responseMessage = `❌ Por favor, digite seu nome completo (nome e sobrenome):`;
+          } else {
+            session.data.userFullName = name;
+            session.state = CONVERSATION_STATES.COLLECTING_USER_DOCUMENT;
+            responseMessage = BOT_MESSAGES.userDocument;
+          }
         } else {
           responseMessage = `Por favor, digite seu nome completo:`;
         }
@@ -456,7 +462,18 @@ ${BOT_MESSAGES.firstTimeSetup}`;
 
       case CONVERSATION_STATES.COLLECTING_USER_DOCUMENT:
         if (Body && Body.trim()) {
-          session.data.userCpfCnpj = Body.trim();
+          const document = Body.trim();
+          const cleanDocument = document.replace(/[^\d]/g, '');
+          
+          // Validate document format (CPF = 11 digits, CNPJ = 14 digits)
+          if (cleanDocument.length !== 11 && cleanDocument.length !== 14) {
+            responseMessage = `❌ Documento inválido. Por favor, digite um CPF (11 dígitos) ou CNPJ (14 dígitos) válido:
+
+💡 Exemplo: 123.456.789-00 ou 12.345.678/0001-90`;
+            break;
+          }
+          
+          session.data.userCpfCnpj = document;
           
           // Update user profile in database
           try {
