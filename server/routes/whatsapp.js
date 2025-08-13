@@ -455,14 +455,18 @@ ${BOT_MESSAGES.firstTimeSetup}`;
         if (Body && Body.trim()) {
           const name = Body.trim();
           if (name.split(' ').length < 2) {
-            responseMessage = `❌ Por favor, digite seu nome completo (nome e sobrenome):`;
+            responseMessage = `Hmm, percebi que você digitou apenas uma parte do seu nome. Para que seu recibo fique mais profissional, preciso do seu nome completo (nome e sobrenome). 
+
+Por exemplo: "João Silva" ou "Maria Santos"
+
+💡 Como você quer que seu nome apareça nos recibos?`;
           } else {
             session.data.userFullName = name;
             session.state = CONVERSATION_STATES.COLLECTING_USER_DOCUMENT;
             responseMessage = BOT_MESSAGES.userDocument;
           }
         } else {
-          responseMessage = `Por favor, digite seu nome completo:`;
+          responseMessage = BOT_MESSAGES.firstTimeSetup;
         }
         break;
 
