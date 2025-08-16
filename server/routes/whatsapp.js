@@ -500,10 +500,13 @@ router.post('/webhook', async (req, res) => {
       
       // Initialize fresh session for new user
       let session = {
-        state: CONVERSATION_STATES.COLLECTING_USER_NAME,
+        state: CONVERSATION_STATES.START,
         data: {}
       };
       userSessions.set(userPhone, session);
+      
+      // Define welcome message for new user
+      responseMessage = BOT_MESSAGES.firstTimeSetup;
 
       // For new users, immediately show welcome message and start profile setup
       responseMessage = BOT_MESSAGES.firstTimeSetup;
