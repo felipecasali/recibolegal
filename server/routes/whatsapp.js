@@ -12,8 +12,88 @@ function getTwilioClient() {
 // WhatsApp number from Twilio
 const WHATSAPP_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
 
-// User session storage (in production, use Redis or database)
-const userSessions = new Map();
+// Session Manager Class
+class SessionManager {
+  constructor(ttlMinutes = 30) {
+    this.sessions = new Map();
+    this.ttlMinutes = ttlMinutes;
+    this.cleanupInterval = setInterval(() => this.cleanupExpiredSessions(), 5 * 60 * 1000); // Cleanup every 5 minutes
+  }
+
+  set(userPhone, session) {
+    this.sessions.set(userPhone, {
+      ...session,
+      lastActivity: Date.now(),
+      expiresAt: Date.now() + (this.ttlMinutes * 60 * 1000)
+    });
+    console.log(`📝 Session updated for ${userPhone}, expires in ${this.ttlMinutes} minutes`);
+  }
+
+  get(userPhone) {
+    const session = this.sessions.get(userPhone);
+    if (!session) return null;
+
+    // Check if session has expired
+    if (Date.now() > session.expiresAt) {
+      console.log(`⌛ Session expired for ${userPhone}`);
+      this.delete(userPhone);
+      return null;
+    }
+
+    // Update last activity and expiration
+    this.set(userPhone, {
+      ...session,
+      lastActivity: Date.now()
+    });
+
+    return session;
+  }
+
+  delete(userPhone) {
+    this.sessions.delete(userPhone);
+    console.log(`🗑️ Session deleted for ${userPhone}`);
+  }
+
+  cleanupExpiredSessions() {
+    const now = Date.now();
+    let cleanedCount = 0;
+
+    for (const [userPhone, session] of this.sessions.entries()) {
+      if (now > session.expiresAt) {
+        this.delete(userPhone);
+        cleanedCount++;
+      }
+    }
+
+    if (cleanedCount > 0) {
+      console.log(`🧹 Cleaned up ${cleanedCount} expired sessions`);
+    }
+  }
+
+  getActiveSessions() {
+    const now = Date.now();
+    return Array.from(this.sessions.entries())
+      .filter(([_, session]) => now <= session.expiresAt)
+      .map(([phone, session]) => ({
+        phone,
+        state: session.state,
+        data: session.data,
+        lastActivity: new Date(session.lastActivity).toISOString(),
+        expiresAt: new Date(session.expiresAt).toISOString()
+      }));
+  }
+
+  destroy() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
+    this.sessions.clear();
+    console.log('🧨 Session manager destroyed and all sessions cleared');
+  }
+}
+
+// Initialize session manager with 30 minutes TTL
+const userSessions = new SessionManager(30);
 
 // Function to send WhatsApp message with interactive buttons
 async function sendWhatsAppMessageWithButtons(to, text, buttons) {
@@ -403,6 +483,10 @@ router.post('/webhook', async (req, res) => {
     
     if (!user) {
       console.log(`👤 Creating new user for ${normalizedPhone}`);
+      // Limpar qualquer sessão antiga que possa existir
+      userSessions.delete(userPhone);
+      console.log(`🧹 Cleaned up any existing session for ${userPhone}`);
+
       user = await userService.createUser({
         phone: normalizedPhone,
         name: '',
@@ -414,7 +498,7 @@ router.post('/webhook', async (req, res) => {
       });
       console.log(`✅ User created successfully: ${user.phone}`);
       
-      // Initialize session for new user
+      // Initialize fresh session for new user
       let session = {
         state: CONVERSATION_STATES.COLLECTING_USER_NAME,
         data: {}
@@ -1114,12 +1198,12 @@ router.post('/send', async (req, res) => {
 
 // Get user sessions (for debugging)
 router.get('/sessions', (req, res) => {
-  const sessions = Array.from(userSessions.entries()).map(([phone, session]) => ({
-    phone,
-    state: session.state,
-    data: session.data
-  }));
-  res.json(sessions);
+  const sessions = userSessions.getActiveSessions();
+  res.json({
+    totalSessions: sessions.length,
+    ttlMinutes: userSessions.ttlMinutes,
+    sessions
+  });
 });
 
 // Test Twilio credentials endpoint
