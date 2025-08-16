@@ -498,15 +498,15 @@ router.post('/webhook', async (req, res) => {
       });
       console.log(`✅ User created successfully: ${user.phone}`);
       
-      // Initialize fresh session for new user
+      // Initialize fresh session for new user and immediately set to collecting name
       let session = {
-        state: CONVERSATION_STATES.START,
+        state: CONVERSATION_STATES.COLLECTING_USER_NAME,
         data: {}
       };
       userSessions.set(userPhone, session);
       
-      // Define welcome message for new user
-      responseMessage = BOT_MESSAGES.firstTimeSetup;
+      // Send welcome message and return immediately
+      await sendWhatsAppMessage(userPhone, BOT_MESSAGES.firstTimeSetup);
 
       // For new users, immediately show welcome message and start profile setup
       responseMessage = BOT_MESSAGES.firstTimeSetup;
@@ -559,14 +559,18 @@ ${BOT_MESSAGES.firstTimeSetup}`;
       case CONVERSATION_STATES.COLLECTING_USER_NAME:
         if (Body && Body.trim()) {
           const name = Body.trim();
-          if (name.split(' ').length < 2) {
+          // Split and clean name parts (remove extra spaces)
+          const nameParts = name.split(' ').filter(part => part.trim().length > 0);
+          
+          if (nameParts.length < 2) {
             responseMessage = `Hmm, percebi que você digitou apenas uma parte do seu nome. Para que seu recibo fique mais profissional, preciso do seu nome completo (nome e sobrenome). 
 
 Por exemplo: "João Silva" ou "Maria Santos"
 
 💡 Como você quer que seu nome apareça nos recibos?`;
           } else {
-            session.data.userFullName = name;
+            // Join name parts back together, removing any extra spaces
+            session.data.userFullName = nameParts.join(' ');
             session.state = CONVERSATION_STATES.COLLECTING_USER_DOCUMENT;
             responseMessage = BOT_MESSAGES.userDocument;
           }
@@ -1091,11 +1095,24 @@ Digite *OI* quando fizer o upgrade para criar novos recibos.`;
         session = { state: CONVERSATION_STATES.START, data: {} };
     }
 
+    // Log state transition for debugging
+    console.log(`🔄 State transition for ${userPhone}:`, {
+      previousState: userSessions.get(userPhone)?.state || 'NO_SESSION',
+      newState: session.state,
+      message: Body?.trim()?.substring(0, 50) || 'NO_MESSAGE',
+      hasUser: !!user
+    });
+
     // Save session
     userSessions.set(userPhone, session);
 
-    // Send response via WhatsApp
-    await sendWhatsAppMessage(userPhone, responseMessage);
+    // Only send response if we have a message to send
+    if (responseMessage && responseMessage.trim()) {
+      console.log(`📤 Sending response to ${userPhone}:`, responseMessage.substring(0, 50) + '...');
+      await sendWhatsAppMessage(userPhone, responseMessage);
+    } else {
+      console.log(`⚠️ No response message for ${userPhone} in state ${session.state}`);
+    }
 
     res.status(200).send('OK');
   } catch (error) {
