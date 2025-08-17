@@ -262,7 +262,7 @@ Para começar, me diga o *nome completo do seu cliente*:`,
 💡 Formato: DD/MM/AAAA (exemplo: 23/07/2025)
 💡 Ou envie "hoje" para usar a data atual`,
 
-  confirmation: (data) => `🔍 *Conferindo os dados do seu recibo:*
+  confirmation: (data) => `🔍 *Confira os dados do recibo:*
 
 👤 *Cliente:* ${data.clientName}
 📄 *CPF/CNPJ:* ${data.clientDocument}
@@ -271,9 +271,8 @@ Para começar, me diga o *nome completo do seu cliente*:`,
 💰 *Valor:* R$ ${data.amount}
 📅 *Data:* ${data.date}
 
-Está tudo correto? Responda:
-✅ *SIM* - para gerar o recibo
-❌ *NÃO* - para recomeçar`,
+✅ *CONFIRMAR* para gerar o recibo
+❌ *REFAZER* para começar novamente`,
 
   success: `🎉 *Recibo criado com sucesso!*
 
@@ -333,8 +332,8 @@ const INTERACTIVE_BUTTONS = {
   
   // Confirmation buttons
   confirmation: [
-    { reply: { id: 'confirm_yes', title: '✅ Confirmar' } },
-    { reply: { id: 'confirm_no', title: '❌ Refazer' } }
+    { reply: { id: 'confirm_yes', title: '✅ CONFIRMAR' } },
+    { reply: { id: 'confirm_no', title: '❌ REFAZER' } }
   ],
   
   // Service description buttons
@@ -1035,12 +1034,10 @@ Digite *OI* para criar um novo recibo quando fizer o upgrade.`;
 
             if (receiptResponse.status === 200) {
               session.state = CONVERSATION_STATES.COMPLETED;
-              responseMessage = BOT_MESSAGES.success;
               
-              // Show completion options with buttons
-              await sendWhatsAppMessage(userPhone, responseMessage);
+              // Show only the options buttons after receipt creation
               await sendWhatsAppMessageWithButtons(userPhone, 
-                "O que você gostaria de fazer agora?", 
+                "✅ *Recibo gerado com sucesso!*\n\nO que você gostaria de fazer agora?", 
                 INTERACTIVE_BUTTONS.afterReceipt
               );
               
